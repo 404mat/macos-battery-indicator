@@ -38,7 +38,7 @@ struct BatteryIndicatorView: View {
                 }
             KnobShape()
                 .fill(trackColor)
-                .frame(width: height * 0.225, height: height * 0.45)
+                .frame(width: height * 0.18, height: height * 0.36)
         }
         .frame(width: 31, height: height)
         .animation(.default, value: model.batteryLevel)
