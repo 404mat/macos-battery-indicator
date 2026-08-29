@@ -3,10 +3,14 @@ import SwiftUI
 struct BatteryIndicatorView: View {
     @ObservedObject var model: BatteryIndicatorModel
 
-    private let height: CGFloat = 13
-
-    private var cornerRadius: CGFloat {
-        height * 0.36
+    enum Metrics {
+        static let height: CGFloat = 13
+        static let width: CGFloat = 31
+        static let knobGap: CGFloat = 1.5
+        static let knobWidth: CGFloat = height * 0.18
+        static let knobHeight: CGFloat = height * 0.36
+        static let cornerRadius: CGFloat = height * 0.36
+        static let statusItemLength: CGFloat = width + 1
     }
 
     private var trackColor: Color {
@@ -18,19 +22,23 @@ struct BatteryIndicatorView: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 1.5) {
-            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+        HStack(alignment: .center, spacing: Metrics.knobGap) {
+            RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous)
                 .fill(trackColor)
                 .overlay(alignment: .leading) {
                     GeometryReader { proxy in
                         let width = (Double(model.batteryLevel) / 100) * proxy.size.width
                         Group {
                             if model.batteryLevel >= 100 {
-                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous)
                                     .fill(fillColor)
                             } else {
-                                BatteryFillShape(radius: cornerRadius)
-                                    .fill(fillColor)
+                                UnevenRoundedRectangle(
+                                    topLeadingRadius: Metrics.cornerRadius,
+                                    bottomLeadingRadius: Metrics.cornerRadius,
+                                    style: .continuous
+                                )
+                                .fill(fillColor)
                             }
                         }
                         .frame(width: width)
@@ -38,9 +46,9 @@ struct BatteryIndicatorView: View {
                 }
             KnobShape()
                 .fill(trackColor)
-                .frame(width: height * 0.18, height: height * 0.36)
+                .frame(width: Metrics.knobWidth, height: Metrics.knobHeight)
         }
-        .frame(width: 31, height: height)
+        .frame(width: Metrics.width, height: Metrics.height)
         .animation(.default, value: model.batteryLevel)
         .animation(.default, value: model.chargingMode)
         .reverseMask {
@@ -66,6 +74,7 @@ struct BatteryIndicatorView: View {
                     .offset(x: -1)
             }
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
@@ -75,29 +84,6 @@ struct ChargingModeSymbol: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(height: 9)
-    }
-}
-
-struct BatteryFillShape: Shape {
-    var radius: CGFloat
-
-    func path(in rect: CGRect) -> Path {
-        let r = min(radius, rect.width / 2, rect.height / 2)
-        var path = Path()
-        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
-        path.addLine(to: CGPoint(x: rect.minX + r, y: rect.minY))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX, y: rect.minY + r),
-            control: CGPoint(x: rect.minX, y: rect.minY)
-        )
-        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - r))
-        path.addQuadCurve(
-            to: CGPoint(x: rect.minX + r, y: rect.maxY),
-            control: CGPoint(x: rect.minX, y: rect.maxY)
-        )
-        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
-        path.closeSubpath()
-        return path
     }
 }
 
