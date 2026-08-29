@@ -12,6 +12,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var hostingView: NSHostingView<BatteryIndicatorView>?
     private let model = BatteryIndicatorModel()
     private var cancellables = Set<AnyCancellable>()
+    private var isMenuOpen = false
+    private var lastElapsedTimeDescription: String?
+    private let elapsedTimeQueue = DispatchQueue(label: "elapsed-time", qos: .userInitiated)
 
     private enum HeaderMetrics {
         static let inset: CGFloat = 15
@@ -30,7 +33,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             .combineLatest(model.$chargingMode)
             .sink { [weak self] level, mode in
                 self?.percentLabel?.stringValue = mode == .error ? "N/A" : "\(level)%"
-                self?.elapsedTimeLabel?.stringValue = self?.model.elapsedTimeDescription ?? "–"
             }
             .store(in: &cancellables)
 
@@ -138,9 +140,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
         model.refresh()
         percentLabel?.stringValue = model.percentDescription
-        elapsedTimeLabel?.stringValue = model.elapsedTimeDescription ?? "–"
+        elapsedTimeLabel?.stringValue = lastElapsedTimeDescription ?? "–"
+        updateHeaderContentSize()
+        elapsedTimeQueue.async { [weak self] in
+            guard let description = self?.model.elapsedTimeDescription else { return }
+            DispatchQueue.main.async {
+                self?.applyElapsedTimeDescription(description)
+            }
+        }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
+    }
+
+    private func applyElapsedTimeDescription(_ description: String?) {
+        lastElapsedTimeDescription = description
+        elapsedTimeLabel?.stringValue = description ?? "–"
+        guard !isMenuOpen else { return }
         updateHeaderContentSize()
     }
 
