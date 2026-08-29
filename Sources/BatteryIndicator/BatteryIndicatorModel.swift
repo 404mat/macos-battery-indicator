@@ -72,6 +72,10 @@ struct PowerStateSpan: Codable {
 private struct PowerStateSpanTracker {
     let defaultsKey: String
 
+    init(defaultsKey: String) {
+        self.defaultsKey = defaultsKey
+    }
+
     private(set) var spans: [PowerStateSpan] = []
     private var didLoad = false
     private var lastActive: Bool?
