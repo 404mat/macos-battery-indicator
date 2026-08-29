@@ -41,6 +41,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             )
         )
         hostingView.frame = NSRect(x: 0, y: 0, width: 38, height: 24)
+        hostingView.autoresizingMask = [.width, .height]
         hostingView.wantsLayer = true
         button.image = NSImage()
         button.subviews.forEach { $0.removeFromSuperview() }
@@ -49,12 +50,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func resizeStatusItem(to size: CGSize) {
-        guard size.width > 0 else { return }
-        let width = max(24, ceil(size.width))
-        guard hostingView?.frame.width != width else { return }
-        let frame = NSRect(origin: .zero, size: CGSize(width: width, height: 24))
-        hostingView?.frame = frame
-        statusItem?.button?.frame = frame
+        guard size.width > 0, size.height > 0 else { return }
+        let width = ceil(size.width)
+        guard statusItem?.length != width else { return }
+        statusItem?.length = width
     }
 
     private func buildMenu() -> NSMenu {

@@ -27,6 +27,7 @@ struct StatusItemRootView: View {
                 Color.clear.preference(key: SizePreferenceKey.self, value: proxy.size)
             }
         )
+        .fixedSize()
         .onPreferenceChange(SizePreferenceKey.self, perform: onSizeChange)
     }
 }
