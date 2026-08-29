@@ -1,23 +1,28 @@
+import BatteryData
 import SwiftUI
 
-enum BatteryGraphLayout {
-    static let horizontalInset: CGFloat = 15
-    static let topPadding: CGFloat = 8
-    static let titleHeight: CGFloat = 16
-    static let titleSpacing: CGFloat = 6
-    static let plotHeight: CGFloat = 90
-    static let timeAxisHeight: CGFloat = 14
-    static let bottomPadding: CGFloat = 8
+public enum BatteryGraphLayout {
+    public static let horizontalInset: CGFloat = 15
+    public static let topPadding: CGFloat = 8
+    public static let titleHeight: CGFloat = 16
+    public static let titleSpacing: CGFloat = 6
+    public static let plotHeight: CGFloat = 90
+    public static let timeAxisHeight: CGFloat = 14
+    public static let bottomPadding: CGFloat = 8
 
-    static var totalHeight: CGFloat {
+    public static var totalHeight: CGFloat {
         topPadding + titleHeight + titleSpacing + plotHeight + timeAxisHeight + bottomPadding
     }
 }
 
-struct BatteryGraphView: View {
+public struct BatteryGraphView: View {
     @ObservedObject var model: BatteryIndicatorModel
 
-    var body: some View {
+    public init(model: BatteryIndicatorModel) {
+        self.model = model
+    }
+
+    public var body: some View {
         VStack(alignment: .leading, spacing: BatteryGraphLayout.titleSpacing) {
             Text("Last 12 hours")
                 .font(.system(size: 13))

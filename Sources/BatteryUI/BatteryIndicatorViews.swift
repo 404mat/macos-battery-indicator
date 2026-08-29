@@ -1,16 +1,21 @@
+import BatteryCore
 import SwiftUI
 
-struct BatteryIndicatorView: View {
+public struct BatteryIndicatorView: View {
     @ObservedObject var model: BatteryIndicatorModel
 
-    enum Metrics {
-        static let height: CGFloat = 13
-        static let width: CGFloat = 31
-        static let knobGap: CGFloat = 1.5
-        static let knobWidth: CGFloat = height * 0.18
-        static let knobHeight: CGFloat = height * 0.36
-        static let cornerRadius: CGFloat = height * 0.36
-        static let statusItemLength: CGFloat = width + 1
+    public init(model: BatteryIndicatorModel) {
+        self.model = model
+    }
+
+    public enum Metrics {
+        public static let height: CGFloat = 13
+        public static let width: CGFloat = 31
+        public static let knobGap: CGFloat = 1.5
+        public static let knobWidth: CGFloat = height * 0.18
+        public static let knobHeight: CGFloat = height * 0.36
+        public static let cornerRadius: CGFloat = height * 0.36
+        public static let statusItemLength: CGFloat = width + 1
     }
 
     private var trackColor: Color {
@@ -24,7 +29,7 @@ struct BatteryIndicatorView: View {
         return model.batteryLevel <= 10 ? .red : .primary
     }
 
-    var body: some View {
+    public var body: some View {
         HStack(alignment: .center, spacing: Metrics.knobGap) {
             RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous)
                 .fill(trackColor)
