@@ -16,6 +16,7 @@ public struct BatteryIndicatorView: View {
         public static let knobHeight: CGFloat = height * 0.36
         public static let cornerRadius: CGFloat = height * 0.36
         public static let statusItemLength: CGFloat = width + 1
+        public static let bodyCenterOffsetX: CGFloat = -(knobGap + knobWidth) / 2
     }
 
     private var trackColor: Color {
@@ -61,17 +62,15 @@ public struct BatteryIndicatorView: View {
         .animation(.default, value: model.chargingMode)
         .reverseMask {
             if model.chargingMode == .charging {
-                ChargingModeSymbol().offset(x: -1.9, y: 0.1)
-                ChargingModeSymbol().offset(x: -0.1, y: -0.1)
-                ChargingModeSymbol().offset(x: -2.2, y: 0.7)
-                ChargingModeSymbol().offset(x: 0.2, y: -0.7)
+                ChargingModeCutoutSymbol()
+                    .offset(x: Metrics.bodyCenterOffsetX)
             }
         }
         .overlay {
             if model.chargingMode == .charging {
                 ChargingModeSymbol()
-                    .foregroundStyle(Color.accentColor)
-                    .offset(x: -1)
+                    .foregroundStyle(.primary)
+                    .offset(x: Metrics.bodyCenterOffsetX)
             }
             if model.chargingMode == .error {
                 Image(systemName: "exclamationmark")
@@ -88,10 +87,67 @@ public struct BatteryIndicatorView: View {
 
 struct ChargingModeSymbol: View {
     var body: some View {
-        Image(systemName: "bolt.fill")
-            .resizable()
-            .aspectRatio(contentMode: .fit)
-            .frame(height: 9)
+        LightningBoltShape()
+            .fill()
+            .frame(width: 11, height: 17)
+    }
+}
+
+struct ChargingModeCutoutSymbol: View {
+    var body: some View {
+        LightningBoltShape()
+            .fill()
+            .overlay {
+                LightningBoltShape()
+                    .stroke(style: StrokeStyle(lineWidth: 3, lineJoin: .round))
+            }
+            .frame(width: 11, height: 17)
+    }
+}
+
+struct LightningBoltShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        let points = [
+            CGPoint(x: rect.minX + rect.width * 0.68, y: rect.minY),
+            CGPoint(x: rect.minX + rect.width * 0.02, y: rect.minY + rect.height * 0.57),
+            CGPoint(x: rect.minX + rect.width * 0.44, y: rect.minY + rect.height * 0.57),
+            CGPoint(x: rect.minX + rect.width * 0.27, y: rect.maxY),
+            CGPoint(x: rect.minX + rect.width * 0.98, y: rect.minY + rect.height * 0.39),
+            CGPoint(x: rect.minX + rect.width * 0.62, y: rect.minY + rect.height * 0.39),
+        ]
+        let cornerOffset = min(rect.width, rect.height) * 0.075
+        var path = Path()
+
+        for index in points.indices {
+            let point = points[index]
+            let previous = points[(index + points.count - 1) % points.count]
+            let next = points[(index + 1) % points.count]
+            let beforeCorner = offsetPoint(from: point, toward: previous, by: cornerOffset)
+            let afterCorner = offsetPoint(from: point, toward: next, by: cornerOffset)
+
+            if index == points.startIndex {
+                path.move(to: beforeCorner)
+            } else {
+                path.addLine(to: beforeCorner)
+            }
+            path.addQuadCurve(to: afterCorner, control: point)
+        }
+
+        path.closeSubpath()
+        return path
+    }
+
+    private func offsetPoint(from point: CGPoint, toward target: CGPoint, by distance: CGFloat) -> CGPoint {
+        let deltaX = target.x - point.x
+        let deltaY = target.y - point.y
+        let length = hypot(deltaX, deltaY)
+        guard length > 0 else { return point }
+
+        let offset = min(distance, length / 2)
+        return CGPoint(
+            x: point.x + deltaX / length * offset,
+            y: point.y + deltaY / length * offset
+        )
     }
 }
 
