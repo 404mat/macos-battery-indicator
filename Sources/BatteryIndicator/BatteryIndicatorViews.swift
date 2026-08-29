@@ -38,7 +38,7 @@ struct BatteryIndicatorView: View {
                 }
             HalfCircleShape()
                 .fill(trackColor)
-                .frame(width: height / 6, height: height / 3)
+                .frame(width: height / 4, height: height / 2)
         }
         .frame(width: 30, height: height)
         .animation(.default, value: model.batteryLevel)
