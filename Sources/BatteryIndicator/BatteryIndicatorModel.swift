@@ -50,9 +50,47 @@ enum ChargingMode {
     case error
 }
 
-struct LowPowerModeSegment: Codable {
+struct PowerStateSpan: Codable {
     let start: Date
     let end: Date?
+
+    static func load(key: String) -> [PowerStateSpan] {
+        guard let data = UserDefaults.standard.data(forKey: key) else {
+            return []
+        }
+        return (try? JSONDecoder().decode([PowerStateSpan].self, from: data)) ?? []
+    }
+
+    static func save(_ spans: [PowerStateSpan], key: String) {
+        let cutoff = Date().addingTimeInterval(-13 * 3600)
+        let pruned = spans.filter { ($0.end ?? Date()) > cutoff }
+        guard let data = try? JSONEncoder().encode(pruned) else { return }
+        UserDefaults.standard.set(data, forKey: key)
+    }
+}
+
+private struct PowerStateSpanTracker {
+    let defaultsKey: String
+
+    private(set) var spans: [PowerStateSpan] = []
+    private var didLoad = false
+    private var lastActive: Bool?
+
+    mutating func update(isActive: Bool) {
+        if !didLoad {
+            spans = PowerStateSpan.load(key: defaultsKey)
+            didLoad = true
+        }
+        guard isActive != lastActive else { return }
+        lastActive = isActive
+        if let last = spans.last, last.end == nil {
+            spans[spans.count - 1] = PowerStateSpan(start: last.start, end: Date())
+        }
+        if isActive {
+            spans.append(PowerStateSpan(start: Date(), end: nil))
+        }
+        PowerStateSpan.save(spans, key: defaultsKey)
+    }
 }
 
 final class BatteryIndicatorModel: ObservableObject {
@@ -93,9 +131,8 @@ final class BatteryIndicatorModel: ObservableObject {
 
     private var timer: Timer?
     private let graphQueue = DispatchQueue(label: "battery-graph", qos: .userInitiated)
-    private var lowPowerSegments: [LowPowerModeSegment] = []
-    private var didLoadLowPowerSegments = false
-    private var lastLowPowerState: Bool?
+    private var lowPowerTracker = PowerStateSpanTracker(defaultsKey: "lowPowerModeSegments")
+    private var chargingTracker = PowerStateSpanTracker(defaultsKey: "chargingSpans")
 
     func startPolling(every interval: TimeInterval = 10) {
         refresh()
@@ -107,7 +144,6 @@ final class BatteryIndicatorModel: ObservableObject {
     }
 
     func refresh() {
-        trackLowPowerMode()
         guard let powerSource = readPowerSource() else {
             batteryLevel = 0
             chargingMode = .error
@@ -121,55 +157,26 @@ final class BatteryIndicatorModel: ObservableObject {
         } else {
             chargingMode = .discharging
         }
-    }
-
-    private func trackLowPowerMode() {
-        if !didLoadLowPowerSegments {
-            lowPowerSegments = Self.loadLowPowerSegments()
-            didLoadLowPowerSegments = true
-        }
-        let isEnabled = ProcessInfo.processInfo.isLowPowerModeEnabled
-        guard isEnabled != lastLowPowerState else { return }
-        lastLowPowerState = isEnabled
-        let now = Date()
-        var segments = lowPowerSegments
-        if let last = segments.last, last.end == nil {
-            segments[segments.count - 1] = LowPowerModeSegment(start: last.start, end: now)
-        }
-        if isEnabled {
-            segments.append(LowPowerModeSegment(start: now, end: nil))
-        }
-        lowPowerSegments = segments
-        Self.saveLowPowerSegments(segments)
-    }
-
-    private static let lowPowerDefaultsKey = "lowPowerModeSegments"
-
-    private static func loadLowPowerSegments() -> [LowPowerModeSegment] {
-        guard let data = UserDefaults.standard.data(forKey: lowPowerDefaultsKey) else {
-            return []
-        }
-        return (try? JSONDecoder().decode([LowPowerModeSegment].self, from: data)) ?? []
-    }
-
-    private static func saveLowPowerSegments(_ segments: [LowPowerModeSegment]) {
-        let cutoff = Date().addingTimeInterval(-13 * 3600)
-        let pruned = segments.filter { ($0.end ?? Date()) > cutoff }
-        guard let data = try? JSONEncoder().encode(pruned) else { return }
-        UserDefaults.standard.set(data, forKey: lowPowerDefaultsKey)
+        lowPowerTracker.update(isActive: ProcessInfo.processInfo.isLowPowerModeEnabled)
+        chargingTracker.update(isActive: chargingMode == .charging)
     }
 
     func refreshBatteryGraph() {
-        let lowPowerSegments = lowPowerSegments
+        let chargingSpans = chargingTracker.spans
+        let lowPowerSpans = lowPowerTracker.spans
         graphQueue.async { [weak self] in
-            guard let graph = Self.readBatteryGraph(now: Date(), lowPowerSegments: lowPowerSegments) else { return }
+            guard let graph = Self.readBatteryGraph(now: Date(), chargingSpans: chargingSpans, lowPowerSpans: lowPowerSpans) else { return }
             DispatchQueue.main.async {
                 self?.batteryGraph = graph
             }
         }
     }
 
-    private static func readBatteryGraph(now: Date, lowPowerSegments: [LowPowerModeSegment]) -> BatteryGraph? {
+    private static func readBatteryGraph(
+        now: Date,
+        chargingSpans: [PowerStateSpan],
+        lowPowerSpans: [PowerStateSpan]
+    ) -> BatteryGraph? {
         guard
             let systemstats_get_battery_charge_graph = SystemStats.batteryChargeGraph,
             let batteryChargeGraph = systemstats_get_battery_charge_graph()
@@ -198,16 +205,15 @@ final class BatteryIndicatorModel: ObservableObject {
         }
 
         var highlights = [BatteryGraph.PowerSegment]()
-        for index in 1..<levelSegmentsInWindow.count
-        where levelSegmentsInWindow[index].level > levelSegmentsInWindow[index - 1].level {
-            let segment = levelSegmentsInWindow[index - 1]
-            highlights.append(
-                BatteryGraph.PowerSegment(start: segment.start, end: segment.end, kind: .charging)
-            )
+        for span in chargingSpans {
+            let start = max(span.start, windowStart)
+            let end = min(span.end ?? now, now)
+            guard end > start else { continue }
+            highlights.append(BatteryGraph.PowerSegment(start: start, end: end, kind: .charging))
         }
-        for segment in lowPowerSegments {
-            let start = max(segment.start, windowStart)
-            let end = min(segment.end ?? now, now)
+        for span in lowPowerSpans {
+            let start = max(span.start, windowStart)
+            let end = min(span.end ?? now, now)
             guard end > start else { continue }
             highlights.append(
                 BatteryGraph.PowerSegment(start: start, end: end, kind: .lowPower)
@@ -215,18 +221,28 @@ final class BatteryIndicatorModel: ObservableObject {
         }
         highlights.sort { $0.start < $1.start }
 
+        let charging = mergedSegments(highlights.filter { $0.kind == .charging }, maxGap: 60)
+        let lowPower = mergedSegments(highlights.filter { $0.kind == .lowPower }, maxGap: 60)
+
         return BatteryGraph(
             windowStart: windowStart,
             levelSegments: levelSegmentsInWindow,
-            highlightSegments: mergedSegments(highlights)
+            highlightSegments: (charging + lowPower).sorted { $0.start < $1.start }
         )
     }
 
-    private static func mergedSegments(_ segments: [BatteryGraph.PowerSegment]) -> [BatteryGraph.PowerSegment] {
+    private static func mergedSegments(
+        _ segments: [BatteryGraph.PowerSegment],
+        maxGap: TimeInterval
+    ) -> [BatteryGraph.PowerSegment] {
         var merged = [BatteryGraph.PowerSegment]()
         for segment in segments {
-            if let last = merged.last, segment.kind == last.kind, segment.start.timeIntervalSince(last.end) < 1 {
-                merged[merged.count - 1] = BatteryGraph.PowerSegment(start: last.start, end: segment.end, kind: last.kind)
+            if let last = merged.last, segment.start.timeIntervalSince(last.end) < maxGap {
+                merged[merged.count - 1] = BatteryGraph.PowerSegment(
+                    start: last.start,
+                    end: max(last.end, segment.end),
+                    kind: last.kind
+                )
             } else {
                 merged.append(segment)
             }
