@@ -1,5 +1,4 @@
 import AppKit
-import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem?
@@ -34,17 +33,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }
 
     private func makeBatteryHeaderView() -> NSView {
-        NSHostingView(
-            rootView: HStack {
-                Text("Battery")
-                Spacer(minLength: 20)
-                Text(batteryPercent)
-            }
-            .fontWeight(.bold)
-            .frame(width: 220)
-            .padding(.horizontal, 15)
-            .padding(.vertical, 6)
-        )
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 28))
+
+        let title = NSTextField(labelWithString: "Battery")
+        title.font = .boldSystemFont(ofSize: 13)
+        title.translatesAutoresizingMaskIntoConstraints = false
+
+        let percent = NSTextField(labelWithString: batteryPercent)
+        percent.font = .boldSystemFont(ofSize: 13)
+        percent.translatesAutoresizingMaskIntoConstraints = false
+
+        container.addSubview(title)
+        container.addSubview(percent)
+
+        NSLayoutConstraint.activate([
+            title.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            title.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            percent.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            percent.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            percent.leadingAnchor.constraint(greaterThanOrEqualTo: title.trailingAnchor, constant: 20),
+        ])
+
+        return container
     }
 
     @objc private func openSettings() {
