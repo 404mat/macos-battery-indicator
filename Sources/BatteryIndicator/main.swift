@@ -62,7 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func makeBatteryHeaderView() -> NSView {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 53))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 250, height: 53))
 
         let title = NSTextField(labelWithString: "Battery")
         title.font = .boldSystemFont(ofSize: 13)
@@ -90,16 +90,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         elapsedTimeLabel = elapsedValue
 
         NSLayoutConstraint.activate([
-            title.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            title.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 15),
             title.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
             percent.centerYAnchor.constraint(equalTo: title.centerYAnchor),
-            percent.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            percent.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -15),
             percent.leadingAnchor.constraint(greaterThanOrEqualTo: title.trailingAnchor, constant: 20),
 
-            elapsedTitle.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            elapsedTitle.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 15),
             elapsedTitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 8),
             elapsedValue.centerYAnchor.constraint(equalTo: elapsedTitle.centerYAnchor),
-            elapsedValue.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            elapsedValue.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -15),
             elapsedValue.leadingAnchor.constraint(greaterThanOrEqualTo: elapsedTitle.trailingAnchor, constant: 20),
         ])
 
