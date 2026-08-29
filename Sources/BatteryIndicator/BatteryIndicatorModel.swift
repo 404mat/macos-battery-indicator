@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import IOKit.ps
 
@@ -15,7 +16,6 @@ final class BatteryIndicatorModel: ObservableObject {
         chargingMode == .error ? "N/A" : "\(batteryLevel)%"
     }
 
-    private var sessionStartDate = Date()
     private let elapsedTimeFormatter: DateComponentsFormatter = {
         let formatter = DateComponentsFormatter()
         formatter.allowedUnits = [.hour, .minute]
@@ -23,8 +23,18 @@ final class BatteryIndicatorModel: ObservableObject {
         return formatter
     }()
 
-    var elapsedTimeDescription: String {
-        elapsedTimeFormatter.string(from: Date().timeIntervalSince(sessionStartDate)) ?? "0 mins"
+    var elapsedTimeDescription: String? {
+        guard
+            let systemstats_get_battery_charge_graph = SystemStats.batteryChargeGraph,
+            let batteryChargeGraph = systemstats_get_battery_charge_graph().takeRetainedValue() as? [String: Any],
+            let rawBatteryStates = batteryChargeGraph["battery_states"] as? [Bool],
+            let batteryTimes = batteryChargeGraph["battery_times"] as? [UInt],
+            rawBatteryStates.count == batteryTimes.count,
+            let lastTime = batteryTimes.last
+        else {
+            return nil
+        }
+        return elapsedTimeFormatter.string(from: Double(lastTime))
     }
 
     private var timer: Timer?
@@ -45,11 +55,7 @@ final class BatteryIndicatorModel: ObservableObject {
             return
         }
         batteryLevel = powerSource.level
-        let mode: ChargingMode = powerSource.isPluggedIn ? .charging : .discharging
-        if mode != chargingMode {
-            sessionStartDate = Date()
-            chargingMode = mode
-        }
+        chargingMode = powerSource.isPluggedIn ? .charging : .discharging
     }
 
     private func readPowerSource() -> (level: Int, isPluggedIn: Bool)? {
@@ -67,4 +73,15 @@ final class BatteryIndicatorModel: ObservableObject {
         }
         return nil
     }
+}
+
+private enum SystemStats {
+    static let batteryChargeGraph: (@convention(c) () -> Unmanaged<NSDictionary>)? = {
+        var pointer: UnsafeMutableRawPointer?
+        if let handle = dlopen("/usr/lib/libsystemstats.dylib", RTLD_LAZY) {
+            pointer = dlsym(handle, "systemstats_get_battery_charge_graph")
+            dlclose(handle)
+        }
+        return unsafeBitCast(pointer, to: (@convention(c) () -> Unmanaged<NSDictionary>)?.self)
+    }()
 }

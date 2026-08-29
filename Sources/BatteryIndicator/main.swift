@@ -30,7 +30,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             .combineLatest(model.$chargingMode)
             .sink { [weak self] level, mode in
                 self?.percentLabel?.stringValue = mode == .error ? "N/A" : "\(level)%"
-                self?.elapsedTimeLabel?.stringValue = self?.model.elapsedTimeDescription ?? ""
+                self?.elapsedTimeLabel?.stringValue = self?.model.elapsedTimeDescription ?? "–"
             }
             .store(in: &cancellables)
 
@@ -140,7 +140,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     func menuWillOpen(_ menu: NSMenu) {
         model.refresh()
         percentLabel?.stringValue = model.percentDescription
-        elapsedTimeLabel?.stringValue = model.elapsedTimeDescription
+        elapsedTimeLabel?.stringValue = model.elapsedTimeDescription ?? "–"
         updateHeaderContentSize()
     }
 
