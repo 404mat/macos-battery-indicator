@@ -6,6 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var percentLabel: NSTextField?
+    private var elapsedTimeLabel: NSTextField?
     private var hostingView: NSHostingView<BatteryIndicatorView>?
     private let model = BatteryIndicatorModel()
     private var cancellables = Set<AnyCancellable>()
@@ -18,6 +19,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             .combineLatest(model.$chargingMode)
             .sink { [weak self] level, mode in
                 self?.percentLabel?.stringValue = mode == .error ? "N/A" : "\(level)%"
+                self?.elapsedTimeLabel?.stringValue = self?.model.elapsedTimeDescription ?? ""
             }
             .store(in: &cancellables)
 
@@ -60,7 +62,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func makeBatteryHeaderView() -> NSView {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 28))
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 48))
 
         let title = NSTextField(labelWithString: "Battery")
         title.font = .boldSystemFont(ofSize: 13)
@@ -70,16 +72,35 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         percent.font = .boldSystemFont(ofSize: 13)
         percent.translatesAutoresizingMaskIntoConstraints = false
 
+        let elapsedTitle = NSTextField(labelWithString: "Elapsed Time")
+        elapsedTitle.font = .systemFont(ofSize: 13)
+        elapsedTitle.textColor = .secondaryLabelColor
+        elapsedTitle.translatesAutoresizingMaskIntoConstraints = false
+
+        let elapsedValue = NSTextField(labelWithString: model.elapsedTimeDescription)
+        elapsedValue.font = .systemFont(ofSize: 13)
+        elapsedValue.textColor = .secondaryLabelColor
+        elapsedValue.translatesAutoresizingMaskIntoConstraints = false
+
         container.addSubview(title)
         container.addSubview(percent)
+        container.addSubview(elapsedTitle)
+        container.addSubview(elapsedValue)
         percentLabel = percent
+        elapsedTimeLabel = elapsedValue
 
         NSLayoutConstraint.activate([
             title.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            title.centerYAnchor.constraint(equalTo: container.centerYAnchor),
+            title.topAnchor.constraint(equalTo: container.topAnchor, constant: 8),
+            percent.centerYAnchor.constraint(equalTo: title.centerYAnchor),
             percent.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            percent.centerYAnchor.constraint(equalTo: container.centerYAnchor),
             percent.leadingAnchor.constraint(greaterThanOrEqualTo: title.trailingAnchor, constant: 20),
+
+            elapsedTitle.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
+            elapsedTitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: 3),
+            elapsedValue.centerYAnchor.constraint(equalTo: elapsedTitle.centerYAnchor),
+            elapsedValue.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
+            elapsedValue.leadingAnchor.constraint(greaterThanOrEqualTo: elapsedTitle.trailingAnchor, constant: 20),
         ])
 
         return container
@@ -88,6 +109,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     func menuWillOpen(_ menu: NSMenu) {
         model.refresh()
         percentLabel?.stringValue = model.percentDescription
+        elapsedTimeLabel?.stringValue = model.elapsedTimeDescription
     }
 
     @objc private func openSettings() {

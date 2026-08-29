@@ -15,6 +15,18 @@ final class BatteryIndicatorModel: ObservableObject {
         chargingMode == .error ? "N/A" : "\(batteryLevel)%"
     }
 
+    private var sessionStartDate = Date()
+    private let elapsedTimeFormatter: DateComponentsFormatter = {
+        let formatter = DateComponentsFormatter()
+        formatter.allowedUnits = [.hour, .minute]
+        formatter.unitsStyle = .short
+        return formatter
+    }()
+
+    var elapsedTimeDescription: String {
+        elapsedTimeFormatter.string(from: Date().timeIntervalSince(sessionStartDate)) ?? "0 mins"
+    }
+
     private var timer: Timer?
 
     func startPolling(every interval: TimeInterval = 10) {
@@ -33,7 +45,11 @@ final class BatteryIndicatorModel: ObservableObject {
             return
         }
         batteryLevel = powerSource.level
-        chargingMode = powerSource.isPluggedIn ? .charging : .discharging
+        let mode: ChargingMode = powerSource.isPluggedIn ? .charging : .discharging
+        if mode != chargingMode {
+            sessionStartDate = Date()
+            chargingMode = mode
+        }
     }
 
     private func readPowerSource() -> (level: Int, isPluggedIn: Bool)? {
