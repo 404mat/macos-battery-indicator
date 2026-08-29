@@ -78,11 +78,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     private func readBatteryPercentage() -> Int? {
         let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
-        guard let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as? [CFTypeRef] else {
-            return nil
-        }
+        let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as [CFTypeRef]
         for source in sources {
-            guard let info = IOPSGetPowerSourceDescription(snapshot, source) as? [String: Any],
+            guard let info = IOPSGetPowerSourceDescription(snapshot, source)?
+                .takeUnretainedValue() as NSDictionary? as? [String: Any],
                   (info[kIOPSTypeKey as String] as? String) == kIOPSInternalBatteryType as String,
                   let capacity = info[kIOPSCurrentCapacityKey as String] as? Int
             else { continue }
