@@ -3,7 +3,7 @@ import PackageDescription
 
 let package = Package(
     name: "BatteryIndicator",
-    platforms: [.macOS(.v13)],
+    platforms: [.macOS("26.0")],
     products: [
         .library(name: "BatteryCore", targets: ["BatteryCore"]),
         .library(name: "BatteryData", targets: ["BatteryData"]),
