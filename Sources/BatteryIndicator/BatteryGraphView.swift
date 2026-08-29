@@ -122,7 +122,7 @@ private struct BatteryGraphCanvas: View {
             let endX = x(for: segment.end, plotRect: plotRect)
             guard endX - startX >= 1 else { continue }
             let rect = CGRect(x: startX, y: plotRect.minY, width: endX - startX, height: plotRect.height)
-            context.fill(Path(rect: rect), with: .color(barColor.opacity(0.16)))
+            context.fill(Path(rect), with: .color(barColor.opacity(0.16)))
         }
     }
 
