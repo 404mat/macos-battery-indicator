@@ -73,12 +73,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         percent.translatesAutoresizingMaskIntoConstraints = false
 
         let elapsedTitle = NSTextField(labelWithString: "Elapsed Time")
-        elapsedTitle.font = .systemFont(ofSize: 13)
+        elapsedTitle.font = .systemFont(ofSize: 11)
         elapsedTitle.textColor = .secondaryLabelColor
         elapsedTitle.translatesAutoresizingMaskIntoConstraints = false
 
         let elapsedValue = NSTextField(labelWithString: model.elapsedTimeDescription)
-        elapsedValue.font = .systemFont(ofSize: 13)
+        elapsedValue.font = .systemFont(ofSize: 11)
         elapsedValue.textColor = .secondaryLabelColor
         elapsedValue.translatesAutoresizingMaskIntoConstraints = false
 
