@@ -10,6 +10,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var elapsedTimeLabel: NSTextField?
     private var headerView: NSView?
     private var headerRows: [(label: NSTextField, value: NSTextField)] = []
+    private var graphMenuItem: NSMenuItem?
+    private var graphSeparatorItem: NSMenuItem?
     private let helperClient = HelperClient()
     private let helperRegistration = HelperRegistration()
     private lazy var model = BatteryIndicatorModel(service: helperClient)
@@ -25,7 +27,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
-        UserDefaults.standard.register(defaults: ["NSMenuEnableActionImages": false])
+        UserDefaults.standard.register(defaults: [
+            "NSMenuEnableActionImages": false,
+            AppPreferences.showBatteryChartKey: true,
+        ])
         setUpStatusItem()
 
         model.$batteryLevel
@@ -84,8 +89,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         header.view = makeBatteryHeaderView()
         menu.addItem(header)
         menu.addItem(.separator())
-        menu.addItem(makeGraphItem())
-        menu.addItem(.separator())
+        let graphItem = makeGraphItem()
+        let graphSeparator = NSMenuItem.separator()
+        graphMenuItem = graphItem
+        graphSeparatorItem = graphSeparator
+        menu.addItem(graphItem)
+        menu.addItem(graphSeparator)
+        updateChartVisibility(UserDefaults.standard.bool(forKey: AppPreferences.showBatteryChartKey))
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
@@ -164,6 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     func menuWillOpen(_ menu: NSMenu) {
+        updateChartVisibility(UserDefaults.standard.bool(forKey: AppPreferences.showBatteryChartKey))
         model.refreshSnapshot()
     }
 
@@ -175,26 +186,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func makeSettingsWindow() -> NSWindow {
+        let settingsView = SettingsView { [weak self] isVisible in
+            self?.updateChartVisibility(isVisible)
+        }
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 360, height: 240),
-            styleMask: [.titled, .closable],
+            contentRect: NSRect(x: 0, y: 0, width: 440, height: 250),
+            styleMask: [.titled, .closable, .miniaturizable],
             backing: .buffered,
             defer: false
         )
-        window.title = "Battery Indicator Settings"
+        window.title = "Settings"
         window.delegate = self
+        window.contentViewController = NSHostingController(rootView: settingsView)
+        window.isReleasedWhenClosed = false
         window.center()
-
-        let title = NSTextField(labelWithString: "Settings")
-        title.font = .boldSystemFont(ofSize: 16)
-        title.frame = NSRect(x: 20, y: 190, width: 200, height: 24)
-        let hint = NSTextField(wrappingLabelWithString: "Charge controls are exposed by the helper and will appear here when supported for this Mac.")
-        hint.frame = NSRect(x: 20, y: 100, width: 320, height: 60)
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 360, height: 240))
-        container.addSubview(title)
-        container.addSubview(hint)
-        window.contentView = container
         return window
+    }
+
+    private func updateChartVisibility(_ isVisible: Bool) {
+        graphMenuItem?.isHidden = !isVisible
+        graphSeparatorItem?.isHidden = !isVisible
     }
 
     func windowWillClose(_ notification: Notification) {
