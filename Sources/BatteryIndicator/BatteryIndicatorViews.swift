@@ -6,7 +6,7 @@ struct BatteryIndicatorView: View {
     private let height: CGFloat = 13
 
     private var cornerRadius: CGFloat {
-        height / 3.25
+        height * 0.36
     }
 
     private var trackColor: Color {
@@ -18,7 +18,7 @@ struct BatteryIndicatorView: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 1) {
+        HStack(alignment: .center, spacing: 1.5) {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(trackColor)
                 .overlay(alignment: .leading) {
@@ -38,9 +38,9 @@ struct BatteryIndicatorView: View {
                 }
             KnobShape()
                 .fill(trackColor)
-                .frame(width: height / 5, height: height * 0.525)
+                .frame(width: height * 0.225, height: height * 0.45)
         }
-        .frame(width: 30, height: height)
+        .frame(width: 31, height: height)
         .animation(.default, value: model.batteryLevel)
         .animation(.default, value: model.chargingMode)
         .reverseMask {
