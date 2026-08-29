@@ -45,6 +45,7 @@ struct BatteryGraph {
 
 enum ChargingMode {
     case charging
+    case pluggedIn
     case discharging
     case error
 }
@@ -113,7 +114,13 @@ final class BatteryIndicatorModel: ObservableObject {
             return
         }
         batteryLevel = powerSource.level
-        chargingMode = powerSource.isPluggedIn ? .charging : .discharging
+        if powerSource.isCharging {
+            chargingMode = .charging
+        } else if powerSource.isPluggedIn {
+            chargingMode = .pluggedIn
+        } else {
+            chargingMode = .discharging
+        }
     }
 
     private func trackLowPowerMode() {
@@ -256,7 +263,7 @@ final class BatteryIndicatorModel: ObservableObject {
         return segments.reversed()
     }
 
-    private func readPowerSource() -> (level: Int, isPluggedIn: Bool)? {
+    private func readPowerSource() -> (level: Int, isPluggedIn: Bool, isCharging: Bool)? {
         let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
         let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as [CFTypeRef]
         for source in sources {
@@ -267,7 +274,9 @@ final class BatteryIndicatorModel: ObservableObject {
                 let capacity = info[kIOPSCurrentCapacityKey as String] as? Int
             else { continue }
             let state = info[kIOPSPowerSourceStateKey as String] as? String
-            return (capacity, state == kIOPSACPowerValue as String)
+            let isPluggedIn = state == kIOPSACPowerValue as String
+            let isCharging = info[kIOPSIsChargingKey as String] as? Bool ?? false
+            return (capacity, isPluggedIn, isCharging)
         }
         return nil
     }

@@ -18,7 +18,10 @@ struct BatteryIndicatorView: View {
     }
 
     private var fillColor: Color {
-        model.batteryLevel <= 10 ? .red : .primary
+        if model.chargingMode == .charging {
+            return Color(nsColor: .systemGreen)
+        }
+        return model.batteryLevel <= 10 ? .red : .primary
     }
 
     var body: some View {
