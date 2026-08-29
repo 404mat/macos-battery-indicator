@@ -36,9 +36,9 @@ struct BatteryIndicatorView: View {
                         .frame(width: width)
                     }
                 }
-            HalfCircleShape()
+            KnobShape()
                 .fill(trackColor)
-                .frame(width: height / 4, height: height / 2)
+                .frame(width: height / 5, height: height * 0.6)
         }
         .frame(width: 30, height: height)
         .animation(.default, value: model.batteryLevel)
@@ -101,15 +101,14 @@ struct BatteryFillShape: Shape {
     }
 }
 
-struct HalfCircleShape: Shape {
+struct KnobShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
-        path.addArc(
-            center: CGPoint(x: rect.minX, y: rect.midY),
-            radius: min(rect.width, rect.height / 2),
-            startAngle: .degrees(-90),
-            endAngle: .degrees(90),
-            clockwise: false
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addCurve(
+            to: CGPoint(x: rect.minX, y: rect.maxY),
+            control1: CGPoint(x: rect.minX + rect.width * 4 / 3, y: rect.minY),
+            control2: CGPoint(x: rect.minX + rect.width * 4 / 3, y: rect.maxY)
         )
         path.closeSubpath()
         return path
