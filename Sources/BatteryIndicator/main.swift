@@ -9,7 +9,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var elapsedTimeLabel: NSTextField?
     private var headerView: NSView?
     private var headerRows: [(label: NSTextField, value: NSTextField)] = []
-    private var hostingView: NSHostingView<BatteryIndicatorView>?
     private let model = BatteryIndicatorModel()
     private var cancellables = Set<AnyCancellable>()
     private var isMenuOpen = false
@@ -40,19 +39,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func setUpStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: 32)
+        let item = NSStatusBar.system.statusItem(withLength: BatteryIndicatorView.Metrics.statusItemLength)
         item.menu = buildMenu()
         statusItem = item
 
         guard let button = item.button else { return }
-        let hostingView = NSHostingView(rootView: BatteryIndicatorView(model: model))
-        hostingView.frame = NSRect(x: 0, y: 0, width: 32, height: 24)
-        hostingView.autoresizingMask = [.width, .height]
-        hostingView.wantsLayer = true
         button.image = NSImage()
         button.subviews.forEach { $0.removeFromSuperview() }
+
+        let hostingView = NSHostingView(rootView: BatteryIndicatorView(model: model))
+        hostingView.wantsLayer = true
+        hostingView.translatesAutoresizingMaskIntoConstraints = false
         button.addSubview(hostingView)
-        self.hostingView = hostingView
+        NSLayoutConstraint.activate([
+            hostingView.leadingAnchor.constraint(equalTo: button.leadingAnchor),
+            hostingView.trailingAnchor.constraint(equalTo: button.trailingAnchor),
+            hostingView.topAnchor.constraint(equalTo: button.topAnchor),
+            hostingView.bottomAnchor.constraint(equalTo: button.bottomAnchor),
+        ])
     }
 
     private func buildMenu() -> NSMenu {
