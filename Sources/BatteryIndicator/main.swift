@@ -6,9 +6,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var percentLabel: NSTextField?
-    private var hostingView: NSHostingView<StatusItemRootView>?
-    private var showPercentageItem: NSMenuItem?
-    private var showPercentageNextToItem: NSMenuItem?
+    private var hostingView: NSHostingView<BatteryIndicatorView>?
     private let model = BatteryIndicatorModel()
     private var cancellables = Set<AnyCancellable>()
 
@@ -27,33 +25,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func setUpStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
+        let item = NSStatusBar.system.statusItem(withLength: 32)
         item.menu = buildMenu()
         statusItem = item
 
         guard let button = item.button else { return }
-        let hostingView = NSHostingView(
-            rootView: StatusItemRootView(
-                model: model,
-                onSizeChange: { [weak self] size in
-                    self?.resizeStatusItem(to: size)
-                }
-            )
-        )
-        hostingView.frame = NSRect(x: 0, y: 0, width: 38, height: 24)
+        let hostingView = NSHostingView(rootView: BatteryIndicatorView(model: model))
+        hostingView.frame = NSRect(x: 0, y: 0, width: 32, height: 24)
         hostingView.autoresizingMask = [.width, .height]
         hostingView.wantsLayer = true
         button.image = NSImage()
         button.subviews.forEach { $0.removeFromSuperview() }
         button.addSubview(hostingView)
         self.hostingView = hostingView
-    }
-
-    private func resizeStatusItem(to size: CGSize) {
-        guard size.width > 0, size.height > 0 else { return }
-        let width = ceil(size.width)
-        guard statusItem?.length != width else { return }
-        statusItem?.length = width
     }
 
     private func buildMenu() -> NSMenu {
@@ -63,26 +47,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let header = NSMenuItem()
         header.view = makeBatteryHeaderView()
         menu.addItem(header)
-        menu.addItem(.separator())
-
-        let showPercentage = NSMenuItem(
-            title: "Show Percentage",
-            action: #selector(toggleShowPercentage(_:)),
-            keyEquivalent: ""
-        )
-        showPercentage.target = self
-        menu.addItem(showPercentage)
-        showPercentageItem = showPercentage
-
-        let showNextTo = NSMenuItem(
-            title: "Show Percentage Next to Icon",
-            action: #selector(toggleShowPercentageNextTo(_:)),
-            keyEquivalent: ""
-        )
-        showNextTo.target = self
-        menu.addItem(showNextTo)
-        showPercentageNextToItem = showNextTo
-
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
@@ -123,19 +87,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     func menuWillOpen(_ menu: NSMenu) {
         model.refresh()
-        showPercentageItem?.state = model.showPercentage ? .on : .off
-        showPercentageNextToItem?.state = model.showPercentageNextToIndicator ? .on : .off
         percentLabel?.stringValue = model.percentDescription
-    }
-
-    @objc private func toggleShowPercentage(_ sender: NSMenuItem) {
-        model.showPercentage.toggle()
-        sender.state = model.showPercentage ? .on : .off
-    }
-
-    @objc private func toggleShowPercentageNextTo(_ sender: NSMenuItem) {
-        model.showPercentageNextToIndicator.toggle()
-        sender.state = model.showPercentageNextToIndicator ? .on : .off
     }
 
     @objc private func openSettings() {

@@ -10,12 +10,6 @@ enum ChargingMode {
 final class BatteryIndicatorModel: ObservableObject {
     @Published private(set) var batteryLevel: Int = 100
     @Published private(set) var chargingMode: ChargingMode = .discharging
-    @Published var showPercentage = true
-    @Published var showPercentageNextToIndicator = false
-
-    var showsPercentageInside: Bool {
-        showPercentage && !showPercentageNextToIndicator
-    }
 
     var percentDescription: String {
         chargingMode == .error ? "N/A" : "\(batteryLevel)%"

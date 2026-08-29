@@ -7,30 +7,25 @@ struct BatteryIndicatorView: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 1) {
-            Group {
-                if model.showsPercentageInside {
-                    PercentageBatteryIndicatorView(model: model, height: height)
-                } else {
-                    BasicBatteryIndicatorView(model: model, height: height)
-                }
-            }
-            .animation(.default, value: model.batteryLevel)
-            .animation(.default, value: model.chargingMode)
-            .overlay {
-                if model.chargingMode == .error {
-                    Image(systemName: "exclamationmark")
-                        .resizable()
-                        .aspectRatio(contentMode: .fit)
-                        .frame(height: 9)
-                        .foregroundStyle(.red)
-                        .padding(.leading, 2)
-                }
-            }
+            BasicBatteryIndicatorView(model: model, height: height)
+                .animation(.default, value: model.batteryLevel)
+                .animation(.default, value: model.chargingMode)
             HalfCircleShape()
                 .foregroundStyle(.primary)
                 .opacity(0.4)
                 .frame(width: 2, height: height / 6)
                 .offset(x: -0.5)
+        }
+        .frame(width: 30, height: height)
+        .overlay {
+            if model.chargingMode == .error {
+                Image(systemName: "exclamationmark")
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(height: 9)
+                    .foregroundStyle(.red)
+                    .padding(.leading, 2)
+            }
         }
     }
 }
@@ -78,36 +73,6 @@ struct BasicBatteryIndicatorView: View {
                 ChargingModeSymbol()
                     .foregroundStyle(Color.accentColor)
             }
-        }
-    }
-}
-
-struct PercentageBatteryIndicatorView: View {
-    @ObservedObject var model: BatteryIndicatorModel
-    let height: CGFloat
-
-    private var fillColor: Color {
-        model.batteryLevel <= 10 ? .red : .primary.opacity(0.9)
-    }
-
-    var body: some View {
-        GeometryReader { proxy in
-            ZStack(alignment: .leading) {
-                Rectangle()
-                    .foregroundStyle(.primary)
-                    .opacity(0.4)
-                Rectangle()
-                    .frame(width: (Double(model.batteryLevel) / 100) * proxy.size.width)
-                    .foregroundStyle(fillColor)
-            }
-        }
-        .mask {
-            RoundedRectangle(cornerRadius: height / 4, style: .continuous)
-        }
-        .reverseMask {
-            Text("\(model.batteryLevel)")
-                .font(.system(size: 9, weight: .semibold, design: .rounded))
-                .monospacedDigit()
         }
     }
 }
