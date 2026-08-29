@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import IOKit.ps
 
@@ -13,6 +14,33 @@ final class BatteryIndicatorModel: ObservableObject {
 
     var percentDescription: String {
         chargingMode == .error ? "N/A" : "\(batteryLevel)%"
+    }
+
+    var elapsedTimeDescription: String? {
+        guard
+            let systemstats_get_battery_charge_graph = SystemStats.batteryChargeGraph,
+            let batteryChargeGraph = systemstats_get_battery_charge_graph()
+                .retain().takeRetainedValue() as? [String: Any],
+            let rawBatteryStates = batteryChargeGraph["battery_states"] as? [Bool],
+            let batteryTimes = batteryChargeGraph["battery_times"] as? [UInt],
+            rawBatteryStates.count == batteryTimes.count,
+            let lastTime = batteryTimes.last
+        else {
+            return nil
+        }
+        let seconds = Int(clamping: lastTime)
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        switch (hours, minutes) {
+        case (0, 0):
+            return "0 mins"
+        case (0, let m):
+            return m == 1 ? "1 min" : "\(m) mins"
+        case (let h, 0):
+            return h == 1 ? "1 hr" : "\(h) hrs"
+        case (let h, let m):
+            return "\(h == 1 ? "1 hr" : "\(h) hrs"), \(m == 1 ? "1 min" : "\(m) mins")"
+        }
     }
 
     private var timer: Timer?
@@ -51,4 +79,15 @@ final class BatteryIndicatorModel: ObservableObject {
         }
         return nil
     }
+}
+
+private enum SystemStats {
+    static let batteryChargeGraph: (@convention(c) () -> Unmanaged<NSDictionary>)? = {
+        var pointer: UnsafeMutableRawPointer?
+        if let handle = dlopen("/usr/lib/libsystemstats.dylib", RTLD_LAZY) {
+            pointer = dlsym(handle, "systemstats_get_battery_charge_graph")
+            dlclose(handle)
+        }
+        return unsafeBitCast(pointer, to: (@convention(c) () -> Unmanaged<NSDictionary>)?.self)
+    }()
 }

@@ -6,12 +6,27 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var percentLabel: NSTextField?
+    private var elapsedTimeLabel: NSTextField?
+    private var headerView: NSView?
+    private var headerRows: [(label: NSTextField, value: NSTextField)] = []
     private var hostingView: NSHostingView<BatteryIndicatorView>?
     private let model = BatteryIndicatorModel()
     private var cancellables = Set<AnyCancellable>()
+    private var isMenuOpen = false
+    private var lastElapsedTimeDescription: String?
+    private let elapsedTimeQueue = DispatchQueue(label: "elapsed-time", qos: .userInitiated)
+
+    private enum HeaderMetrics {
+        static let inset: CGFloat = 15
+        static let minColumnGap: CGFloat = 20
+        static let topPadding: CGFloat = 8
+        static let rowSpacing: CGFloat = 8
+        static let bottomPadding: CGFloat = 6
+    }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        UserDefaults.standard.register(defaults: ["NSMenuEnableActionImages": false])
         setUpStatusItem()
 
         model.$batteryLevel
@@ -54,13 +69,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         menu.addItem(settings)
 
         menu.addItem(.separator())
-        let quit = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        let quit = NSMenuItem(title: "Quit macOS Battery Indicator", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
         return menu
     }
 
     private func makeBatteryHeaderView() -> NSView {
-        let container = NSView(frame: NSRect(x: 0, y: 0, width: 220, height: 28))
+        let container = NSView(frame: .zero)
+        container.autoresizingMask = [.width]
 
         let title = NSTextField(labelWithString: "Battery")
         title.font = .boldSystemFont(ofSize: 13)
@@ -70,24 +86,82 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         percent.font = .boldSystemFont(ofSize: 13)
         percent.translatesAutoresizingMaskIntoConstraints = false
 
+        let elapsedTitle = NSTextField(labelWithString: "Elapsed Time")
+        elapsedTitle.font = .systemFont(ofSize: 12)
+        elapsedTitle.textColor = .secondaryLabelColor
+        elapsedTitle.translatesAutoresizingMaskIntoConstraints = false
+
+        let elapsedValue = NSTextField(labelWithString: model.elapsedTimeDescription ?? "–")
+        elapsedValue.font = .systemFont(ofSize: 12)
+        elapsedValue.textColor = .secondaryLabelColor
+        elapsedValue.translatesAutoresizingMaskIntoConstraints = false
+
         container.addSubview(title)
         container.addSubview(percent)
+        container.addSubview(elapsedTitle)
+        container.addSubview(elapsedValue)
         percentLabel = percent
+        elapsedTimeLabel = elapsedValue
+        headerRows = [
+            (label: title, value: percent),
+            (label: elapsedTitle, value: elapsedValue),
+        ]
+        headerView = container
 
         NSLayoutConstraint.activate([
-            title.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
-            title.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            percent.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -16),
-            percent.centerYAnchor.constraint(equalTo: container.centerYAnchor),
-            percent.leadingAnchor.constraint(greaterThanOrEqualTo: title.trailingAnchor, constant: 20),
+            title.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: HeaderMetrics.inset),
+            title.topAnchor.constraint(equalTo: container.topAnchor, constant: HeaderMetrics.topPadding),
+            percent.centerYAnchor.constraint(equalTo: title.centerYAnchor),
+            percent.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -HeaderMetrics.inset),
+            percent.leadingAnchor.constraint(greaterThanOrEqualTo: title.trailingAnchor, constant: HeaderMetrics.minColumnGap),
+
+            elapsedTitle.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: HeaderMetrics.inset),
+            elapsedTitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: HeaderMetrics.rowSpacing),
+            elapsedValue.centerYAnchor.constraint(equalTo: elapsedTitle.centerYAnchor),
+            elapsedValue.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -HeaderMetrics.inset),
+            elapsedValue.leadingAnchor.constraint(greaterThanOrEqualTo: elapsedTitle.trailingAnchor, constant: HeaderMetrics.minColumnGap),
         ])
 
+        updateHeaderContentSize()
         return container
     }
 
+    private func updateHeaderContentSize() {
+        guard let headerView else { return }
+        let rowsWidth = headerRows
+            .map { ceil($0.label.intrinsicContentSize.width) + HeaderMetrics.minColumnGap + ceil($0.value.intrinsicContentSize.width) }
+            .max() ?? 0
+        let rowHeights = headerRows.map { ceil($0.label.intrinsicContentSize.height) }
+        let height = HeaderMetrics.topPadding
+            + rowHeights.reduce(0, +)
+            + HeaderMetrics.rowSpacing * CGFloat(rowHeights.count - 1)
+            + HeaderMetrics.bottomPadding
+        headerView.setFrameSize(NSSize(width: HeaderMetrics.inset * 2 + rowsWidth, height: height))
+    }
+
     func menuWillOpen(_ menu: NSMenu) {
+        isMenuOpen = true
         model.refresh()
         percentLabel?.stringValue = model.percentDescription
+        elapsedTimeLabel?.stringValue = lastElapsedTimeDescription ?? "–"
+        updateHeaderContentSize()
+        elapsedTimeQueue.async { [weak self] in
+            guard let description = self?.model.elapsedTimeDescription else { return }
+            DispatchQueue.main.async {
+                self?.applyElapsedTimeDescription(description)
+            }
+        }
+    }
+
+    func menuDidClose(_ menu: NSMenu) {
+        isMenuOpen = false
+    }
+
+    private func applyElapsedTimeDescription(_ description: String?) {
+        lastElapsedTimeDescription = description
+        elapsedTimeLabel?.stringValue = description ?? "–"
+        guard !isMenuOpen else { return }
+        updateHeaderContentSize()
     }
 
     @objc private func openSettings() {
