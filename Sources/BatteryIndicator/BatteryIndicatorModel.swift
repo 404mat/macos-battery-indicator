@@ -16,13 +16,6 @@ final class BatteryIndicatorModel: ObservableObject {
         chargingMode == .error ? "N/A" : "\(batteryLevel)%"
     }
 
-    private let elapsedTimeFormatter: DateComponentsFormatter = {
-        let formatter = DateComponentsFormatter()
-        formatter.allowedUnits = [.hour, .minute]
-        formatter.unitsStyle = .short
-        return formatter
-    }()
-
     var elapsedTimeDescription: String? {
         guard
             let systemstats_get_battery_charge_graph = SystemStats.batteryChargeGraph,
@@ -34,7 +27,19 @@ final class BatteryIndicatorModel: ObservableObject {
         else {
             return nil
         }
-        return elapsedTimeFormatter.string(from: Double(lastTime))
+        let seconds = Int(clamping: lastTime)
+        let hours = seconds / 3600
+        let minutes = (seconds % 3600) / 60
+        switch (hours, minutes) {
+        case (0, 0):
+            return "0 mins"
+        case (0, let m):
+            return m == 1 ? "1 min" : "\(m) mins"
+        case (let h, 0):
+            return h == 1 ? "1 hr" : "\(h) hrs"
+        case (let h, let m):
+            return "\(h == 1 ? "1 hr" : "\(h) hrs"), \(m == 1 ? "1 min" : "\(m) mins")"
+        }
     }
 
     private var timer: Timer?
