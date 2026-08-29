@@ -109,7 +109,7 @@ struct HalfCircleShape: Shape {
             radius: min(rect.width, rect.height / 2),
             startAngle: .degrees(-90),
             endAngle: .degrees(90),
-            clockwise: true
+            clockwise: false
         )
         path.closeSubpath()
         return path
