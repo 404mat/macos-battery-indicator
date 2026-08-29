@@ -37,22 +37,14 @@ public struct BatteryIndicatorView: View {
                 .overlay(alignment: .leading) {
                     GeometryReader { proxy in
                         let width = (Double(model.batteryLevel) / 100) * proxy.size.width
-                        Group {
-                            if model.batteryLevel >= 100 {
-                                RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous)
-                                    .fill(fillColor)
-                            } else {
-                                UnevenRoundedRectangle(
-                                    topLeadingRadius: Metrics.cornerRadius,
-                                    bottomLeadingRadius: Metrics.cornerRadius,
-                                    style: .continuous
-                                )
-                                .fill(fillColor)
-                            }
-                        }
-                        .frame(width: width)
+                        Rectangle()
+                            .fill(fillColor)
+                            .frame(width: width)
                     }
                 }
+                .clipShape(
+                    RoundedRectangle(cornerRadius: Metrics.cornerRadius, style: .continuous)
+                )
             KnobShape()
                 .fill(trackColor)
                 .frame(width: Metrics.knobWidth, height: Metrics.knobHeight)
