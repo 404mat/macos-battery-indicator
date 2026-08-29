@@ -19,7 +19,7 @@ final class BatteryIndicatorModel: ObservableObject {
     var elapsedTimeDescription: String? {
         guard
             let systemstats_get_battery_charge_graph = SystemStats.batteryChargeGraph,
-            let batteryChargeGraph = systemstats_get_battery_charge_graph()?
+            let batteryChargeGraph = systemstats_get_battery_charge_graph()
                 .retain().takeRetainedValue() as? [String: Any],
             let rawBatteryStates = batteryChargeGraph["battery_states"] as? [Bool],
             let batteryTimes = batteryChargeGraph["battery_times"] as? [UInt],
