@@ -1,14 +1,16 @@
 import AppKit
+import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
+    private let batteryPercent = "100%"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.title = "🔋 100%"
+        item.button?.title = "🔋 \(batteryPercent)"
         item.menu = buildMenu()
         statusItem = item
     }
@@ -16,9 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
 
-        let battery = NSMenuItem(title: "Battery: 100% (Hello, World!)", action: nil, keyEquivalent: "")
-        battery.isEnabled = false
-        menu.addItem(battery)
+        let header = NSMenuItem()
+        header.view = makeBatteryHeaderView()
+        menu.addItem(header)
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
@@ -29,6 +31,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         let quit = NSMenuItem(title: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         menu.addItem(quit)
         return menu
+    }
+
+    private func makeBatteryHeaderView() -> NSView {
+        NSHostingView(
+            rootView: HStack {
+                Text("Battery")
+                Spacer(minLength: 20)
+                Text(batteryPercent)
+            }
+            .fontWeight(.bold)
+            .frame(width: 220)
+            .padding(.horizontal, 15)
+            .padding(.vertical, 6)
+        )
     }
 
     @objc private func openSettings() {
