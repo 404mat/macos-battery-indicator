@@ -18,7 +18,7 @@ struct BatteryIndicatorView: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 0) {
+        HStack(alignment: .center, spacing: 1) {
             RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(trackColor)
                 .overlay(alignment: .leading) {
