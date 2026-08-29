@@ -24,9 +24,15 @@ struct BatteryIndicatorView: View {
                 .overlay(alignment: .leading) {
                     GeometryReader { proxy in
                         let width = (Double(model.batteryLevel) / 100) * proxy.size.width
-                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
-                            .fill(fillColor)
-                            .frame(width: width)
+                        Group {
+                            if model.batteryLevel >= 100 {
+                                RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                            } else {
+                                BatteryFillShape(radius: cornerRadius)
+                            }
+                        }
+                        .fill(fillColor)
+                        .frame(width: width)
                     }
                 }
             HalfCircleShape()
@@ -71,15 +77,38 @@ struct ChargingModeSymbol: View {
     }
 }
 
+struct BatteryFillShape: Shape {
+    var radius: CGFloat
+
+    func path(in rect: CGRect) -> Path {
+        let r = min(radius, rect.width / 2, rect.height / 2)
+        var path = Path()
+        path.move(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.minX + r, y: rect.minY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX, y: rect.minY + r),
+            control: CGPoint(x: rect.minX, y: rect.minY)
+        )
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY - r))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX + r, y: rect.maxY),
+            control: CGPoint(x: rect.minX, y: rect.maxY)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
+}
+
 struct HalfCircleShape: Shape {
     func path(in rect: CGRect) -> Path {
         var path = Path()
         path.addArc(
-            center: CGPoint(x: rect.maxX, y: rect.midY),
-            radius: rect.height / 2,
+            center: CGPoint(x: rect.minX, y: rect.midY),
+            radius: min(rect.width, rect.height / 2),
             startAngle: .degrees(-90),
             endAngle: .degrees(90),
-            clockwise: false
+            clockwise: true
         )
         path.closeSubpath()
         return path
