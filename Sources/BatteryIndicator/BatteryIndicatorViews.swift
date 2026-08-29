@@ -76,7 +76,7 @@ struct BasicBatteryIndicatorView: View {
         .overlay {
             if model.chargingMode == .charging {
                 ChargingModeSymbol()
-                    .foregroundStyle(.accentColor)
+                    .foregroundStyle(Color.accentColor)
             }
         }
     }
