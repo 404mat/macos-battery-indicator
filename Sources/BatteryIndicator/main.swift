@@ -1,27 +1,60 @@
 import AppKit
-import IOKit.ps
+import Combine
+import SwiftUI
 
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
     private var percentLabel: NSTextField?
-    private var batteryTimer: Timer?
-    private var batteryPercent = "N/A"
+    private var hostingView: NSHostingView<StatusItemRootView>?
+    private var showPercentageItem: NSMenuItem?
+    private var showPercentageNextToItem: NSMenuItem?
+    private let model = BatteryIndicatorModel()
+    private var cancellables = Set<AnyCancellable>()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
+        setUpStatusItem()
 
+        model.$batteryLevel
+            .combineLatest(model.$chargingMode)
+            .sink { [weak self] level, mode in
+                self?.percentLabel?.stringValue = mode == .error ? "N/A" : "\(level)%"
+            }
+            .store(in: &cancellables)
+
+        model.startPolling()
+    }
+
+    private func setUpStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         item.menu = buildMenu()
         statusItem = item
 
-        refreshBatteryStatus()
+        guard let button = item.button else { return }
+        let hostingView = NSHostingView(
+            rootView: StatusItemRootView(
+                model: model,
+                onSizeChange: { [weak self] size in
+                    self?.resizeStatusItem(to: size)
+                }
+            )
+        )
+        hostingView.frame = NSRect(x: 0, y: 0, width: 38, height: 24)
+        hostingView.wantsLayer = true
+        button.image = NSImage()
+        button.subviews.forEach { $0.removeFromSuperview() }
+        button.addSubview(hostingView)
+        self.hostingView = hostingView
+    }
 
-        let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
-            self?.refreshBatteryStatus()
-        }
-        RunLoop.main.add(timer, forMode: .common)
-        batteryTimer = timer
+    private func resizeStatusItem(to size: CGSize) {
+        guard size.width > 0 else { return }
+        let width = max(24, ceil(size.width))
+        guard hostingView?.frame.width != width else { return }
+        let frame = NSRect(origin: .zero, size: CGSize(width: width, height: 24))
+        hostingView?.frame = frame
+        statusItem?.button?.frame = frame
     }
 
     private func buildMenu() -> NSMenu {
@@ -31,6 +64,26 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let header = NSMenuItem()
         header.view = makeBatteryHeaderView()
         menu.addItem(header)
+        menu.addItem(.separator())
+
+        let showPercentage = NSMenuItem(
+            title: "Show Percentage",
+            action: #selector(toggleShowPercentage(_:)),
+            keyEquivalent: ""
+        )
+        showPercentage.target = self
+        menu.addItem(showPercentage)
+        showPercentageItem = showPercentage
+
+        let showNextTo = NSMenuItem(
+            title: "Show Percentage Next to Icon",
+            action: #selector(toggleShowPercentageNextTo(_:)),
+            keyEquivalent: ""
+        )
+        showNextTo.target = self
+        menu.addItem(showNextTo)
+        showPercentageNextToItem = showNextTo
+
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
@@ -50,7 +103,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         title.font = .boldSystemFont(ofSize: 13)
         title.translatesAutoresizingMaskIntoConstraints = false
 
-        let percent = NSTextField(labelWithString: batteryPercent)
+        let percent = NSTextField(labelWithString: model.percentDescription)
         percent.font = .boldSystemFont(ofSize: 13)
         percent.translatesAutoresizingMaskIntoConstraints = false
 
@@ -69,29 +122,21 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         return container
     }
 
-    private func refreshBatteryStatus() {
-        guard let capacity = readBatteryPercentage() else { return }
-        batteryPercent = "\(capacity)%"
-        statusItem?.button?.title = "🔋 \(batteryPercent)"
-        percentLabel?.stringValue = batteryPercent
-    }
-
-    private func readBatteryPercentage() -> Int? {
-        let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
-        let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as [CFTypeRef]
-        for source in sources {
-            guard let info = IOPSGetPowerSourceDescription(snapshot, source)?
-                .takeUnretainedValue() as NSDictionary? as? [String: Any],
-                  (info[kIOPSTypeKey as String] as? String) == kIOPSInternalBatteryType as String,
-                  let capacity = info[kIOPSCurrentCapacityKey as String] as? Int
-            else { continue }
-            return capacity
-        }
-        return nil
-    }
-
     func menuWillOpen(_ menu: NSMenu) {
-        refreshBatteryStatus()
+        model.refresh()
+        showPercentageItem?.state = model.showPercentage ? .on : .off
+        showPercentageNextToItem?.state = model.showPercentageNextToIndicator ? .on : .off
+        percentLabel?.stringValue = model.percentDescription
+    }
+
+    @objc private func toggleShowPercentage(_ sender: NSMenuItem) {
+        model.showPercentage.toggle()
+        sender.state = model.showPercentage ? .on : .off
+    }
+
+    @objc private func toggleShowPercentageNextTo(_ sender: NSMenuItem) {
+        model.showPercentageNextToIndicator.toggle()
+        sender.state = model.showPercentageNextToIndicator ? .on : .off
     }
 
     @objc private func openSettings() {
