@@ -37,6 +37,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             .store(in: &cancellables)
 
         model.startPolling()
+        model.refreshBatteryGraph()
     }
 
     private func setUpStatusItem() {
@@ -62,6 +63,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let header = NSMenuItem()
         header.view = makeBatteryHeaderView()
         menu.addItem(header)
+        menu.addItem(.separator())
+        menu.addItem(makeGraphItem())
         menu.addItem(.separator())
 
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
@@ -126,6 +129,19 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         return container
     }
 
+    private func makeGraphItem() -> NSMenuItem {
+        let item = NSMenuItem()
+        let width = headerView?.frame.width ?? 220
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: BatteryGraphLayout.totalHeight))
+        container.autoresizingMask = [.width]
+        let hostingView = NSHostingView(rootView: BatteryGraphView(model: model))
+        hostingView.frame = container.bounds
+        hostingView.autoresizingMask = [.width, .height]
+        container.addSubview(hostingView)
+        item.view = container
+        return item
+    }
+
     private func updateHeaderContentSize() {
         guard let headerView else { return }
         let rowsWidth = headerRows
@@ -142,6 +158,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     func menuWillOpen(_ menu: NSMenu) {
         isMenuOpen = true
         model.refresh()
+        model.refreshBatteryGraph()
         percentLabel?.stringValue = model.percentDescription
         elapsedTimeLabel?.stringValue = lastElapsedTimeDescription ?? "–"
         updateHeaderContentSize()
