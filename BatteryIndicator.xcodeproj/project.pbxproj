@@ -1,0 +1,273 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {};
+	objectVersion = 60;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		100000000000000000000001 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000001 /* main.swift */; };
+		100000000000000000000002 /* HelperClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000002 /* HelperClient.swift */; };
+		100000000000000000000003 /* HelperRegistration.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000003 /* HelperRegistration.swift */; };
+		100000000000000000000004 /* main.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000004 /* main.swift */; };
+		100000000000000000000005 /* ChargeController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000005 /* ChargeController.swift */; };
+		100000000000000000000006 /* HistoryRecorder.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000006 /* HistoryRecorder.swift */; };
+		100000000000000000000007 /* XPCServer.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000007 /* XPCServer.swift */; };
+		100000000000000000000008 /* BatteryHelper in Embed Helper Tool */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000D /* BatteryHelper */; settings = {ATTRIBUTES = (CodeSignOnCopy, ); }; };
+		100000000000000000000009 /* helper plist in Copy LaunchDaemon Property List */ = {isa = PBXBuildFile; fileRef = 20000000000000000000000A /* com.mathias.BatteryIndicator.helper.plist */; };
+		10000000000000000000000A /* BatteryUI in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000001 /* BatteryUI */; };
+		10000000000000000000000B /* BatteryXPC in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000002 /* BatteryXPC */; };
+		10000000000000000000000C /* BatteryCore in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000003 /* BatteryCore */; };
+		10000000000000000000000D /* BatteryData in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000004 /* BatteryData */; };
+		10000000000000000000000E /* BatteryXPC in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000005 /* BatteryXPC */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		700000000000000000000001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 500000000000000000000001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 600000000000000000000002;
+			remoteInfo = BatteryHelper;
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		300000000000000000000003 /* Embed Helper Tool */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = "";
+			dstSubfolderSpec = 6;
+			files = (100000000000000000000008 /* BatteryHelper in Embed Helper Tool */, );
+			name = "Embed Helper Tool";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		300000000000000000000004 /* Copy LaunchDaemon Property List */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = Contents/Library/LaunchDaemons;
+			dstSubfolderSpec = 1;
+			files = (100000000000000000000009 /* helper plist in Copy LaunchDaemon Property List */, );
+			name = "Copy LaunchDaemon Property List";
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		200000000000000000000001 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/App/main.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000002 /* HelperClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/App/HelperClient.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000003 /* HelperRegistration.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/App/HelperRegistration.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000004 /* main.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BatteryHelper/main.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000005 /* ChargeController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BatteryHelper/ChargeController.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000006 /* HistoryRecorder.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BatteryHelper/HistoryRecorder.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000007 /* XPCServer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/BatteryHelper/XPCServer.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000008 /* App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/App-Info.plist; sourceTree = SOURCE_ROOT; };
+		200000000000000000000009 /* Helper-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/Helper-Info.plist; sourceTree = SOURCE_ROOT; };
+		20000000000000000000000A /* com.mathias.BatteryIndicator.helper.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/com.mathias.BatteryIndicator.helper.plist; sourceTree = SOURCE_ROOT; };
+		20000000000000000000000C /* BatteryIndicator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BatteryIndicator.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		20000000000000000000000D /* BatteryHelper */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = BatteryHelper; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		300000000000000000000002 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000000A /* BatteryUI in Frameworks */,
+				10000000000000000000000B /* BatteryXPC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		300000000000000000000006 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				10000000000000000000000C /* BatteryCore in Frameworks */,
+				10000000000000000000000D /* BatteryData in Frameworks */,
+				10000000000000000000000E /* BatteryXPC in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		400000000000000000000001 = {
+			isa = PBXGroup;
+			children = (
+				400000000000000000000002 /* App */,
+				400000000000000000000003 /* Helper */,
+				400000000000000000000004 /* Configuration */,
+				400000000000000000000005 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		400000000000000000000002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000001 /* main.swift */,
+				200000000000000000000002 /* HelperClient.swift */,
+				200000000000000000000003 /* HelperRegistration.swift */,
+			);
+			name = App;
+			sourceTree = "<group>";
+		};
+		400000000000000000000003 /* Helper */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000004 /* main.swift */,
+				200000000000000000000005 /* ChargeController.swift */,
+				200000000000000000000006 /* HistoryRecorder.swift */,
+				200000000000000000000007 /* XPCServer.swift */,
+			);
+			name = Helper;
+			sourceTree = "<group>";
+		};
+		400000000000000000000004 /* Configuration */ = {
+			isa = PBXGroup;
+			children = (
+				200000000000000000000008 /* App-Info.plist */,
+				200000000000000000000009 /* Helper-Info.plist */,
+				20000000000000000000000A /* com.mathias.BatteryIndicator.helper.plist */,
+			);
+			name = Configuration;
+			sourceTree = "<group>";
+		};
+		400000000000000000000005 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				20000000000000000000000C /* BatteryIndicator.app */,
+				20000000000000000000000D /* BatteryHelper */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		600000000000000000000001 /* BatteryIndicator */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 800000000000000000000002 /* Build configuration list for PBXNativeTarget BatteryIndicator */;
+			buildPhases = (
+				300000000000000000000001 /* Sources */,
+				300000000000000000000002 /* Frameworks */,
+				300000000000000000000003 /* Embed Helper Tool */,
+				300000000000000000000004 /* Copy LaunchDaemon Property List */,
+			);
+			buildRules = ();
+			dependencies = (700000000000000000000002 /* BatteryHelper */, );
+			name = BatteryIndicator;
+			packageProductDependencies = (
+				900000000000000000000001 /* BatteryUI */,
+				900000000000000000000002 /* BatteryXPC */,
+			);
+			productName = BatteryIndicator;
+			productReference = 20000000000000000000000C /* BatteryIndicator.app */;
+			productType = "com.apple.product-type.application";
+		};
+		600000000000000000000002 /* BatteryHelper */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 800000000000000000000003 /* Build configuration list for PBXNativeTarget BatteryHelper */;
+			buildPhases = (
+				300000000000000000000005 /* Sources */,
+				300000000000000000000006 /* Frameworks */,
+			);
+			buildRules = ();
+			dependencies = ();
+			name = BatteryHelper;
+			packageProductDependencies = (
+				900000000000000000000003 /* BatteryCore */,
+				900000000000000000000004 /* BatteryData */,
+				900000000000000000000005 /* BatteryXPC */,
+			);
+			productName = BatteryHelper;
+			productReference = 20000000000000000000000D /* BatteryHelper */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		500000000000000000000001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = YES;
+				LastSwiftUpdateCheck = 2600;
+				LastUpgradeCheck = 2600;
+				TargetAttributes = {
+					600000000000000000000001 = {CreatedOnToolsVersion = 26.0; };
+					600000000000000000000002 = {CreatedOnToolsVersion = 26.0; };
+				};
+			};
+			buildConfigurationList = 800000000000000000000001 /* Build configuration list for PBXProject BatteryIndicator */;
+			compatibilityVersion = "Xcode 15.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (en, Base, );
+			mainGroup = 400000000000000000000001;
+			packageReferences = (A00000000000000000000001 /* XCLocalSwiftPackageReference "." */, );
+			productRefGroup = 400000000000000000000005 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				600000000000000000000001 /* BatteryIndicator */,
+				600000000000000000000002 /* BatteryHelper */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		300000000000000000000001 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000001 /* main.swift in Sources */,
+				100000000000000000000002 /* HelperClient.swift in Sources */,
+				100000000000000000000003 /* HelperRegistration.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		300000000000000000000005 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000004 /* main.swift in Sources */,
+				100000000000000000000005 /* ChargeController.swift in Sources */,
+				100000000000000000000006 /* HistoryRecorder.swift in Sources */,
+				100000000000000000000007 /* XPCServer.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		700000000000000000000002 /* BatteryHelper */ = {isa = PBXTargetDependency; target = 600000000000000000000002 /* BatteryHelper */; targetProxy = 700000000000000000000001 /* PBXContainerItemProxy */; };
+/* End PBXTargetDependency section */
+
+/* Begin XCBuildConfiguration section */
+		B00000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 13.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Debug; };
+		B00000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 13.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_VERSION = 5.0; }; name = Release; };
+		B00000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/App-Info.plist; MACOSX_DEPLOYMENT_TARGET = 13.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Debug; };
+		B00000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/App-Info.plist; MACOSX_DEPLOYMENT_TARGET = 13.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Release; };
+		B00000000000000000000005 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; CREATE_INFOPLIST_SECTION_IN_BINARY = YES; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/Helper-Info.plist; MACOSX_DEPLOYMENT_TARGET = 13.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator.helper; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; }; name = Debug; };
+		B00000000000000000000006 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; CREATE_INFOPLIST_SECTION_IN_BINARY = YES; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/Helper-Info.plist; MACOSX_DEPLOYMENT_TARGET = 13.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator.helper; PRODUCT_NAME = "$(TARGET_NAME)"; SKIP_INSTALL = YES; SWIFT_VERSION = 5.0; }; name = Release; };
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		800000000000000000000001 /* Build configuration list for PBXProject BatteryIndicator */ = {isa = XCConfigurationList; buildConfigurations = (B00000000000000000000001 /* Debug */, B00000000000000000000002 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		800000000000000000000002 /* Build configuration list for PBXNativeTarget BatteryIndicator */ = {isa = XCConfigurationList; buildConfigurations = (B00000000000000000000003 /* Debug */, B00000000000000000000004 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+		800000000000000000000003 /* Build configuration list for PBXNativeTarget BatteryHelper */ = {isa = XCConfigurationList; buildConfigurations = (B00000000000000000000005 /* Debug */, B00000000000000000000006 /* Release */, ); defaultConfigurationIsVisible = 0; defaultConfigurationName = Release; };
+/* End XCConfigurationList section */
+
+/* Begin XCLocalSwiftPackageReference section */
+		A00000000000000000000001 /* XCLocalSwiftPackageReference "." */ = {isa = XCLocalSwiftPackageReference; relativePath = "."; };
+/* End XCLocalSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		900000000000000000000001 /* BatteryUI */ = {isa = XCSwiftPackageProductDependency; package = A00000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = BatteryUI; };
+		900000000000000000000002 /* BatteryXPC */ = {isa = XCSwiftPackageProductDependency; package = A00000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = BatteryXPC; };
+		900000000000000000000003 /* BatteryCore */ = {isa = XCSwiftPackageProductDependency; package = A00000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = BatteryCore; };
+		900000000000000000000004 /* BatteryData */ = {isa = XCSwiftPackageProductDependency; package = A00000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = BatteryData; };
+		900000000000000000000005 /* BatteryXPC */ = {isa = XCSwiftPackageProductDependency; package = A00000000000000000000001 /* XCLocalSwiftPackageReference "." */; productName = BatteryXPC; };
+/* End XCSwiftPackageProductDependency section */
+	};
+	rootObject = 500000000000000000000001 /* Project object */;
+}

@@ -1,4 +1,5 @@
 import AppKit
+import BatteryUI
 import Combine
 import SwiftUI
 
@@ -9,11 +10,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var elapsedTimeLabel: NSTextField?
     private var headerView: NSView?
     private var headerRows: [(label: NSTextField, value: NSTextField)] = []
-    private let model = BatteryIndicatorModel()
+    private let helperClient = HelperClient()
+    private let helperRegistration = HelperRegistration()
+    private lazy var model = BatteryIndicatorModel(service: helperClient)
     private var cancellables = Set<AnyCancellable>()
-    private var isMenuOpen = false
-    private var lastElapsedTimeDescription: String?
-    private let elapsedTimeQueue = DispatchQueue(label: "elapsed-time", qos: .userInitiated)
 
     private enum HeaderMetrics {
         static let inset: CGFloat = 15
@@ -32,11 +32,28 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             .combineLatest(model.$chargingMode)
             .sink { [weak self] level, mode in
                 self?.percentLabel?.stringValue = mode == .error ? "N/A" : "\(level)%"
+                self?.updateHeaderContentSize()
             }
             .store(in: &cancellables)
 
-        model.startPolling()
-        model.refreshBatteryGraph()
+        model.$elapsedTimeDescription
+            .sink { [weak self] description in
+                self?.elapsedTimeLabel?.stringValue = description ?? "–"
+                self?.updateHeaderContentSize()
+            }
+            .store(in: &cancellables)
+
+        do {
+            try helperRegistration.prepare { [weak self] in
+                self?.model.start()
+            }
+        } catch {
+            NSLog("Unable to register battery helper: %@", error.localizedDescription)
+        }
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        model.stop()
     }
 
     private func setUpStatusItem() {
@@ -49,7 +66,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         button.subviews.forEach { $0.removeFromSuperview() }
 
         let hostingView = NSHostingView(rootView: BatteryIndicatorView(model: model))
-        hostingView.wantsLayer = true
         hostingView.translatesAutoresizingMaskIntoConstraints = false
         button.addSubview(hostingView)
         NSLayoutConstraint.activate([
@@ -74,10 +90,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let settings = NSMenuItem(title: "Settings…", action: #selector(openSettings), keyEquivalent: ",")
         settings.target = self
         menu.addItem(settings)
-
         menu.addItem(.separator())
-        let quit = NSMenuItem(title: "Quit macOS Battery Indicator", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
-        menu.addItem(quit)
+        menu.addItem(NSMenuItem(
+            title: "Quit macOS Battery Indicator",
+            action: #selector(NSApplication.terminate(_:)),
+            keyEquivalent: "q"
+        ))
         return menu
     }
 
@@ -85,34 +103,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let container = NSView(frame: .zero)
         container.autoresizingMask = [.width]
 
-        let title = NSTextField(labelWithString: "Battery")
-        title.font = .boldSystemFont(ofSize: 13)
-        title.translatesAutoresizingMaskIntoConstraints = false
+        let title = makeLabel("Battery", font: .boldSystemFont(ofSize: 13))
+        let percent = makeLabel(model.percentDescription, font: .boldSystemFont(ofSize: 13))
+        let elapsedTitle = makeLabel("Elapsed Time", font: .systemFont(ofSize: 12), secondary: true)
+        let elapsedValue = makeLabel("–", font: .systemFont(ofSize: 12), secondary: true)
 
-        let percent = NSTextField(labelWithString: model.percentDescription)
-        percent.font = .boldSystemFont(ofSize: 13)
-        percent.translatesAutoresizingMaskIntoConstraints = false
-
-        let elapsedTitle = NSTextField(labelWithString: "Elapsed Time")
-        elapsedTitle.font = .systemFont(ofSize: 12)
-        elapsedTitle.textColor = .secondaryLabelColor
-        elapsedTitle.translatesAutoresizingMaskIntoConstraints = false
-
-        let elapsedValue = NSTextField(labelWithString: model.elapsedTimeDescription ?? "–")
-        elapsedValue.font = .systemFont(ofSize: 12)
-        elapsedValue.textColor = .secondaryLabelColor
-        elapsedValue.translatesAutoresizingMaskIntoConstraints = false
-
-        container.addSubview(title)
-        container.addSubview(percent)
-        container.addSubview(elapsedTitle)
-        container.addSubview(elapsedValue)
+        [title, percent, elapsedTitle, elapsedValue].forEach(container.addSubview)
         percentLabel = percent
         elapsedTimeLabel = elapsedValue
-        headerRows = [
-            (label: title, value: percent),
-            (label: elapsedTitle, value: elapsedValue),
-        ]
+        headerRows = [(title, percent), (elapsedTitle, elapsedValue)]
         headerView = container
 
         NSLayoutConstraint.activate([
@@ -121,16 +120,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             percent.centerYAnchor.constraint(equalTo: title.centerYAnchor),
             percent.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -HeaderMetrics.inset),
             percent.leadingAnchor.constraint(greaterThanOrEqualTo: title.trailingAnchor, constant: HeaderMetrics.minColumnGap),
-
             elapsedTitle.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: HeaderMetrics.inset),
             elapsedTitle.topAnchor.constraint(equalTo: title.bottomAnchor, constant: HeaderMetrics.rowSpacing),
             elapsedValue.centerYAnchor.constraint(equalTo: elapsedTitle.centerYAnchor),
             elapsedValue.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -HeaderMetrics.inset),
             elapsedValue.leadingAnchor.constraint(greaterThanOrEqualTo: elapsedTitle.trailingAnchor, constant: HeaderMetrics.minColumnGap),
         ])
-
         updateHeaderContentSize()
         return container
+    }
+
+    private func makeLabel(_ text: String, font: NSFont, secondary: Bool = false) -> NSTextField {
+        let label = NSTextField(labelWithString: text)
+        label.font = font
+        label.textColor = secondary ? .secondaryLabelColor : .labelColor
+        label.translatesAutoresizingMaskIntoConstraints = false
+        return label
     }
 
     private func makeGraphItem() -> NSMenuItem {
@@ -148,75 +153,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     private func updateHeaderContentSize() {
         guard let headerView else { return }
-        let rowsWidth = headerRows
-            .map { ceil($0.label.intrinsicContentSize.width) + HeaderMetrics.minColumnGap + ceil($0.value.intrinsicContentSize.width) }
-            .max() ?? 0
+        let rowsWidth = headerRows.map {
+            ceil($0.label.intrinsicContentSize.width) + HeaderMetrics.minColumnGap + ceil($0.value.intrinsicContentSize.width)
+        }.max() ?? 0
         let rowHeights = headerRows.map { ceil($0.label.intrinsicContentSize.height) }
-        let height = HeaderMetrics.topPadding
-            + rowHeights.reduce(0, +)
-            + HeaderMetrics.rowSpacing * CGFloat(rowHeights.count - 1)
+        let height = HeaderMetrics.topPadding + rowHeights.reduce(0, +)
+            + HeaderMetrics.rowSpacing * CGFloat(max(rowHeights.count - 1, 0))
             + HeaderMetrics.bottomPadding
         headerView.setFrameSize(NSSize(width: HeaderMetrics.inset * 2 + rowsWidth, height: height))
     }
 
     func menuWillOpen(_ menu: NSMenu) {
-        isMenuOpen = true
-        model.refresh()
-        model.refreshBatteryGraph()
-        percentLabel?.stringValue = model.percentDescription
-        elapsedTimeLabel?.stringValue = lastElapsedTimeDescription ?? "–"
-        updateHeaderContentSize()
-        elapsedTimeQueue.async { [weak self] in
-            guard let description = self?.model.elapsedTimeDescription else { return }
-            DispatchQueue.main.async {
-                self?.applyElapsedTimeDescription(description)
-            }
-        }
-    }
-
-    func menuDidClose(_ menu: NSMenu) {
-        isMenuOpen = false
-    }
-
-    private func applyElapsedTimeDescription(_ description: String?) {
-        lastElapsedTimeDescription = description
-        elapsedTimeLabel?.stringValue = description ?? "–"
-        guard !isMenuOpen else { return }
-        updateHeaderContentSize()
+        model.refreshSnapshot()
     }
 
     @objc private func openSettings() {
-        let window: NSWindow
-        if let existing = settingsWindow {
-            window = existing
-        } else {
-            window = NSWindow(
-                contentRect: NSRect(x: 0, y: 0, width: 360, height: 240),
-                styleMask: [.titled, .closable],
-                backing: .buffered,
-                defer: false
-            )
-            window.title = "Battery Indicator Settings"
-            window.delegate = self
-            window.center()
-
-            let settingsLabel = NSTextField(labelWithString: "Settings")
-            settingsLabel.font = .boldSystemFont(ofSize: 16)
-
-            let hint = NSTextField(wrappingLabelWithString: "This is a placeholder settings page. Battery settings will live here.")
-            hint.frame = NSRect(x: 20, y: 60, width: 320, height: 60)
-
-            let container = NSView(frame: NSRect(x: 0, y: 0, width: 360, height: 240))
-            settingsLabel.frame = NSRect(x: 20, y: 190, width: 200, height: 24)
-            container.addSubview(settingsLabel)
-            container.addSubview(hint)
-            window.contentView = container
-
-            settingsWindow = window
-        }
-
+        let window = settingsWindow ?? makeSettingsWindow()
+        settingsWindow = window
         window.makeKeyAndOrderFront(nil)
         NSApp.activate(ignoringOtherApps: true)
+    }
+
+    private func makeSettingsWindow() -> NSWindow {
+        let window = NSWindow(
+            contentRect: NSRect(x: 0, y: 0, width: 360, height: 240),
+            styleMask: [.titled, .closable],
+            backing: .buffered,
+            defer: false
+        )
+        window.title = "Battery Indicator Settings"
+        window.delegate = self
+        window.center()
+
+        let title = NSTextField(labelWithString: "Settings")
+        title.font = .boldSystemFont(ofSize: 16)
+        title.frame = NSRect(x: 20, y: 190, width: 200, height: 24)
+        let hint = NSTextField(wrappingLabelWithString: "Charge controls are exposed by the helper and will appear here when supported for this Mac.")
+        hint.frame = NSRect(x: 20, y: 100, width: 320, height: 60)
+        let container = NSView(frame: NSRect(x: 0, y: 0, width: 360, height: 240))
+        container.addSubview(title)
+        container.addSubview(hint)
+        window.contentView = container
+        return window
     }
 
     func windowWillClose(_ notification: Notification) {

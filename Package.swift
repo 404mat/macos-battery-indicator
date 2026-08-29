@@ -4,10 +4,25 @@ import PackageDescription
 let package = Package(
     name: "BatteryIndicator",
     platforms: [.macOS(.v13)],
+    products: [
+        .library(name: "BatteryCore", targets: ["BatteryCore"]),
+        .library(name: "BatteryData", targets: ["BatteryData"]),
+        .library(name: "BatteryXPC", targets: ["BatteryXPC"]),
+        .library(name: "BatteryUI", targets: ["BatteryUI"]),
+    ],
     targets: [
-        .executableTarget(
-            name: "BatteryIndicator",
-            path: "Sources/BatteryIndicator"
-        )
+        .target(name: "BatteryCore"),
+        .target(
+            name: "BatteryData",
+            dependencies: ["BatteryCore"]
+        ),
+        .target(
+            name: "BatteryXPC",
+            dependencies: ["BatteryCore", "BatteryData"]
+        ),
+        .target(
+            name: "BatteryUI",
+            dependencies: ["BatteryCore", "BatteryData", "BatteryXPC"]
+        ),
     ]
 )
