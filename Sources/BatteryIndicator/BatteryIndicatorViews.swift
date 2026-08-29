@@ -4,7 +4,10 @@ struct BatteryIndicatorView: View {
     @ObservedObject var model: BatteryIndicatorModel
 
     private let height: CGFloat = 13
-    private let inset: CGFloat = 1.5
+
+    private var cornerRadius: CGFloat {
+        height / 3.25
+    }
 
     private var trackColor: Color {
         .primary.opacity(0.35)
@@ -15,40 +18,37 @@ struct BatteryIndicatorView: View {
     }
 
     var body: some View {
-        HStack(alignment: .center, spacing: 1.5) {
-            RoundedRectangle(cornerRadius: height / 3.25, style: .continuous)
+        HStack(alignment: .center, spacing: 0) {
+            RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                 .fill(trackColor)
                 .overlay(alignment: .leading) {
                     GeometryReader { proxy in
-                        let availableWidth = proxy.size.width - inset * 2
-                        let fillHeight = proxy.size.height - inset * 2
-                        let width = max(0, (Double(model.batteryLevel) / 100) * availableWidth)
-                        RoundedRectangle(cornerRadius: fillHeight / 3, style: .continuous)
+                        let width = (Double(model.batteryLevel) / 100) * proxy.size.width
+                        RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
                             .fill(fillColor)
-                            .frame(width: width, height: fillHeight)
-                            .offset(x: inset, y: inset)
+                            .frame(width: width)
                     }
                 }
-            Capsule()
+            HalfCircleShape()
                 .fill(trackColor)
-                .frame(width: 1.5, height: height / 3)
+                .frame(width: height / 6, height: height / 3)
         }
         .frame(width: 30, height: height)
         .animation(.default, value: model.batteryLevel)
         .animation(.default, value: model.chargingMode)
         .reverseMask {
             if model.chargingMode == .charging {
-                ChargingModeSymbol().offset(x: -2.4, y: 0.1)
-                ChargingModeSymbol().offset(x: -0.6, y: -0.1)
-                ChargingModeSymbol().offset(x: -2.7, y: 0.7)
-                ChargingModeSymbol().offset(x: -0.3, y: -0.7)
+                ChargingModeSymbol().offset(x: -1.9, y: 0.1)
+                ChargingModeSymbol().offset(x: -0.1, y: -0.1)
+                ChargingModeSymbol().offset(x: -2.2, y: 0.7)
+                ChargingModeSymbol().offset(x: 0.2, y: -0.7)
             }
         }
         .overlay {
             if model.chargingMode == .charging {
                 ChargingModeSymbol()
                     .foregroundStyle(Color.accentColor)
-                    .offset(x: -1.5)
+                    .offset(x: -1)
             }
             if model.chargingMode == .error {
                 Image(systemName: "exclamationmark")
@@ -56,7 +56,7 @@ struct BatteryIndicatorView: View {
                     .aspectRatio(contentMode: .fit)
                     .frame(height: 9)
                     .foregroundStyle(.red)
-                    .offset(x: -1.5)
+                    .offset(x: -1)
             }
         }
     }
@@ -68,6 +68,21 @@ struct ChargingModeSymbol: View {
             .resizable()
             .aspectRatio(contentMode: .fit)
             .frame(height: 9)
+    }
+}
+
+struct HalfCircleShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.addArc(
+            center: CGPoint(x: rect.maxX, y: rect.midY),
+            radius: rect.height / 2,
+            startAngle: .degrees(-90),
+            endAngle: .degrees(90),
+            clockwise: false
+        )
+        path.closeSubpath()
+        return path
     }
 }
 
