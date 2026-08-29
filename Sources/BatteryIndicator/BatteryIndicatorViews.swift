@@ -27,11 +27,12 @@ struct BatteryIndicatorView: View {
                         Group {
                             if model.batteryLevel >= 100 {
                                 RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
+                                    .fill(fillColor)
                             } else {
                                 BatteryFillShape(radius: cornerRadius)
+                                    .fill(fillColor)
                             }
                         }
-                        .fill(fillColor)
                         .frame(width: width)
                     }
                 }
