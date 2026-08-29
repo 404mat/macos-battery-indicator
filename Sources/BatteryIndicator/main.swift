@@ -1,21 +1,32 @@
 import AppKit
+import IOKit.ps
 
-final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
+final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
-    private let batteryPercent = "100%"
+    private var percentLabel: NSTextField?
+    private var batteryTimer: Timer?
+    private var batteryPercent = "N/A"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApp.setActivationPolicy(.accessory)
 
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-        item.button?.title = "🔋 \(batteryPercent)"
         item.menu = buildMenu()
         statusItem = item
+
+        refreshBatteryStatus()
+
+        let timer = Timer(timeInterval: 30, repeats: true) { [weak self] _ in
+            self?.refreshBatteryStatus()
+        }
+        RunLoop.main.add(timer, forMode: .common)
+        batteryTimer = timer
     }
 
     private func buildMenu() -> NSMenu {
         let menu = NSMenu()
+        menu.delegate = self
 
         let header = NSMenuItem()
         header.view = makeBatteryHeaderView()
@@ -45,6 +56,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
         container.addSubview(title)
         container.addSubview(percent)
+        percentLabel = percent
 
         NSLayoutConstraint.activate([
             title.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: 16),
@@ -55,6 +67,32 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         ])
 
         return container
+    }
+
+    private func refreshBatteryStatus() {
+        guard let capacity = readBatteryPercentage() else { return }
+        batteryPercent = "\(capacity)%"
+        statusItem?.button?.title = "🔋 \(batteryPercent)"
+        percentLabel?.stringValue = batteryPercent
+    }
+
+    private func readBatteryPercentage() -> Int? {
+        let snapshot = IOPSCopyPowerSourcesInfo().takeRetainedValue()
+        guard let sources = IOPSCopyPowerSourcesList(snapshot).takeRetainedValue() as? [CFTypeRef] else {
+            return nil
+        }
+        for source in sources {
+            guard let info = IOPSGetPowerSourceDescription(snapshot, source) as? [String: Any],
+                  (info[kIOPSTypeKey as String] as? String) == kIOPSInternalBatteryType as String,
+                  let capacity = info[kIOPSCurrentCapacityKey as String] as? Int
+            else { continue }
+            return capacity
+        }
+        return nil
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        refreshBatteryStatus()
     }
 
     @objc private func openSettings() {
