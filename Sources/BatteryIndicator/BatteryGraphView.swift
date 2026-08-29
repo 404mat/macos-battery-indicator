@@ -61,6 +61,14 @@ private struct BatteryGraphCanvas: View {
         Color(nsColor: .systemGreen)
     }
 
+    private var lowLevelColor: Color {
+        Color(nsColor: .systemRed)
+    }
+
+    private var lowPowerColor: Color {
+        Color(nsColor: .systemYellow)
+    }
+
     var body: some View {
         Canvas { context, size in
             let plotRect = CGRect(
@@ -70,7 +78,7 @@ private struct BatteryGraphCanvas: View {
                 height: size.height - BatteryGraphLayout.timeAxisHeight
             )
             drawGrid(in: &context, plotRect: plotRect)
-            drawACPowerHighlights(in: &context, plotRect: plotRect)
+            drawPowerHighlights(in: &context, plotRect: plotRect)
             drawBars(in: &context, plotRect: plotRect)
             drawAxisLabels(in: &context, plotRect: plotRect)
         }
@@ -116,13 +124,14 @@ private struct BatteryGraphCanvas: View {
         }
     }
 
-    private func drawACPowerHighlights(in context: inout GraphicsContext, plotRect: CGRect) {
-        for segment in graph.acPowerSegments {
+    private func drawPowerHighlights(in context: inout GraphicsContext, plotRect: CGRect) {
+        for segment in graph.highlightSegments {
             let startX = x(for: segment.start, plotRect: plotRect)
             let endX = x(for: segment.end, plotRect: plotRect)
             guard endX - startX >= 1 else { continue }
             let rect = CGRect(x: startX, y: plotRect.minY, width: endX - startX, height: plotRect.height)
-            context.fill(Path(rect), with: .color(barColor.opacity(0.16)))
+            let color = segment.kind == .charging ? barColor : lowPowerColor
+            context.fill(Path(rect), with: .color(color.opacity(0.16)))
         }
     }
 
@@ -139,7 +148,8 @@ private struct BatteryGraphCanvas: View {
             let barX = plotRect.minX + CGFloat(index) * slot + (slot - barWidth) / 2
             let rect = CGRect(x: barX, y: plotRect.maxY - height, width: barWidth, height: height)
             let path = Path(roundedRect: rect, cornerRadius: barWidth / 2, style: .continuous)
-            context.fill(path, with: .color(barColor))
+            let color = level <= 10 ? lowLevelColor : barColor
+            context.fill(path, with: .color(color))
         }
     }
 
