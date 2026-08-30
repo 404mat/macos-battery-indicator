@@ -1,18 +1,29 @@
 import AppKit
 import BatteryCore
-import BatteryUI
 
 /// A native status-item image is mirrored by AppKit on every menu bar. Keeping
 /// the live SwiftUI view out of NSStatusBarButton avoids stale snapshots and
 /// layout changes when focus moves between displays.
 enum BatteryStatusImage {
+    static let statusItemLength: CGFloat = Metrics.width + 1
+
+    private enum Metrics {
+        static let height: CGFloat = 13
+        static let width: CGFloat = 31
+        static let knobGap: CGFloat = 1.5
+        static let knobWidth: CGFloat = height * 0.18
+        static let knobHeight: CGFloat = height * 0.36
+        static let cornerRadius: CGFloat = height * 0.36
+        static let bodyCenterOffsetX: CGFloat = -(knobGap + knobWidth) / 2
+    }
+
     private static let imageHeight: CGFloat = 18
     private static let boltWidth: CGFloat = 11
     private static let boltHeight: CGFloat = 17
 
     static func make(level: Int, mode: ChargingMode) -> NSImage {
         let size = NSSize(
-            width: BatteryIndicatorView.Metrics.width,
+            width: Metrics.width,
             height: imageHeight
         )
         let clampedLevel = min(max(level, 0), 100)
@@ -26,7 +37,7 @@ enum BatteryStatusImage {
     }
 
     private static func draw(in bounds: NSRect, level: Int, mode: ChargingMode) {
-        let metrics = BatteryIndicatorView.Metrics.self
+        let metrics = Metrics.self
         let bodyWidth = metrics.width - metrics.knobGap - metrics.knobWidth
         let origin = NSPoint(
             x: bounds.midX - metrics.width / 2,

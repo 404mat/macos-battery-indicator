@@ -70,7 +70,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func setUpStatusItem() {
-        let item = NSStatusBar.system.statusItem(withLength: BatteryIndicatorView.Metrics.statusItemLength)
+        let item = NSStatusBar.system.statusItem(withLength: BatteryStatusImage.statusItemLength)
         item.menu = buildMenu()
         statusItem = item
 
