@@ -24,11 +24,13 @@ public final class BatteryReader: BatteryReading {
             let isPluggedIn = powerSourceState == kIOPSACPowerValue as String
             let isCharging = info[kIOPSIsChargingKey as String] as? Bool ?? false
             let mode: ChargingMode = isCharging ? .charging : (isPluggedIn ? .pluggedIn : .discharging)
+            let timeToEmpty = info[kIOPSTimeToEmptyKey as String] as? Int
 
             return BatteryState(
                 level: capacity,
                 chargingMode: mode,
-                isLowPowerModeEnabled: ProcessInfo.processInfo.isLowPowerModeEnabled
+                isLowPowerModeEnabled: ProcessInfo.processInfo.isLowPowerModeEnabled,
+                timeToEmptyMinutes: timeToEmpty
             )
         }
 
