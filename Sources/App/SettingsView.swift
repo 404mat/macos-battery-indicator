@@ -7,6 +7,8 @@ enum AppPreferences {
 }
 
 struct SettingsView: View {
+    static let contentSize = NSSize(width: 560, height: 300)
+
     @ObservedObject var helperRegistration: HelperRegistration
     let onChartVisibilityChange: (Bool) -> Void
     let onEstimatedRemainingVisibilityChange: (Bool) -> Void
@@ -31,8 +33,9 @@ struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
+        .tabViewStyle(.grouped)
         .padding(20)
-        .frame(width: 440, height: 250)
+        .frame(width: Self.contentSize.width, height: Self.contentSize.height)
     }
 }
 
