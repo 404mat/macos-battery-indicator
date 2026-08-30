@@ -8,6 +8,7 @@ public final class BatteryIndicatorModel: ObservableObject {
     @Published public private(set) var chargingMode = ChargingMode.error
     @Published public private(set) var batteryGraph: BatteryGraph?
     @Published public private(set) var elapsedTimeDescription: String?
+    @Published public private(set) var estimatedRemainingDescription: String?
     @Published public private(set) var isHelperConnected = false
 
     public var percentDescription: String {
@@ -64,5 +65,6 @@ public final class BatteryIndicatorModel: ObservableObject {
     private func apply(_ state: BatteryState) {
         batteryLevel = state.level
         chargingMode = state.chargingMode
+        estimatedRemainingDescription = BatteryMetrics.estimatedRemainingDescription(for: state)
     }
 }

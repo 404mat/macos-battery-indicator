@@ -6,8 +6,12 @@ import SwiftUI
 final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMenuDelegate {
     private var statusItem: NSStatusItem?
     private var settingsWindow: NSWindow?
+    private var batteryTitleLabel: NSTextField?
     private var percentLabel: NSTextField?
+    private var elapsedTimeTitleLabel: NSTextField?
     private var elapsedTimeLabel: NSTextField?
+    private var estimatedRemainingTitleLabel: NSTextField?
+    private var estimatedRemainingValueLabel: NSTextField?
     private var headerView: NSView?
     private var headerRows: [(label: NSTextField, value: NSTextField)] = []
     private var graphMenuItem: NSMenuItem?
@@ -30,6 +34,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         UserDefaults.standard.register(defaults: [
             "NSMenuEnableActionImages": false,
             AppPreferences.showBatteryChartKey: true,
+            AppPreferences.showEstimatedRemainingKey: true,
         ])
         setUpStatusItem()
 
@@ -44,6 +49,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         model.$elapsedTimeDescription
             .sink { [weak self] description in
                 self?.elapsedTimeLabel?.stringValue = description ?? "–"
+                self?.updateHeaderContentSize()
+            }
+            .store(in: &cancellables)
+
+        model.$estimatedRemainingDescription
+            .sink { [weak self] description in
+                self?.estimatedRemainingValueLabel?.stringValue = description ?? "–"
                 self?.updateHeaderContentSize()
             }
             .store(in: &cancellables)
@@ -117,11 +129,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let percent = makeLabel(model.percentDescription, font: .boldSystemFont(ofSize: 13))
         let elapsedTitle = makeLabel("Elapsed Time", font: .systemFont(ofSize: 12), secondary: true)
         let elapsedValue = makeLabel("–", font: .systemFont(ofSize: 12), secondary: true)
+        let estimatedTitle = makeLabel("Time to empty", font: .systemFont(ofSize: 12), secondary: true)
+        let estimatedValue = makeLabel("–", font: .systemFont(ofSize: 12), secondary: true)
 
-        [title, percent, elapsedTitle, elapsedValue].forEach(container.addSubview)
+        [title, percent, elapsedTitle, elapsedValue, estimatedTitle, estimatedValue].forEach(container.addSubview)
+        batteryTitleLabel = title
         percentLabel = percent
+        elapsedTimeTitleLabel = elapsedTitle
         elapsedTimeLabel = elapsedValue
-        headerRows = [(title, percent), (elapsedTitle, elapsedValue)]
+        estimatedRemainingTitleLabel = estimatedTitle
+        estimatedRemainingValueLabel = estimatedValue
         headerView = container
 
         NSLayoutConstraint.activate([
@@ -135,8 +152,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             elapsedValue.centerYAnchor.constraint(equalTo: elapsedTitle.centerYAnchor),
             elapsedValue.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -HeaderMetrics.inset),
             elapsedValue.leadingAnchor.constraint(greaterThanOrEqualTo: elapsedTitle.trailingAnchor, constant: HeaderMetrics.minColumnGap),
+            estimatedTitle.leadingAnchor.constraint(equalTo: container.leadingAnchor, constant: HeaderMetrics.inset),
+            estimatedTitle.topAnchor.constraint(equalTo: elapsedTitle.bottomAnchor, constant: HeaderMetrics.rowSpacing),
+            estimatedValue.centerYAnchor.constraint(equalTo: estimatedTitle.centerYAnchor),
+            estimatedValue.trailingAnchor.constraint(equalTo: container.trailingAnchor, constant: -HeaderMetrics.inset),
+            estimatedValue.leadingAnchor.constraint(greaterThanOrEqualTo: estimatedTitle.trailingAnchor, constant: HeaderMetrics.minColumnGap),
         ])
-        updateHeaderContentSize()
+        updateEstimatedRemainingVisibility(
+            UserDefaults.standard.bool(forKey: AppPreferences.showEstimatedRemainingKey)
+        )
         return container
     }
 
@@ -175,6 +199,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     func menuWillOpen(_ menu: NSMenu) {
         updateChartVisibility(UserDefaults.standard.bool(forKey: AppPreferences.showBatteryChartKey))
+        updateEstimatedRemainingVisibility(
+            UserDefaults.standard.bool(forKey: AppPreferences.showEstimatedRemainingKey)
+        )
         model.refreshSnapshot()
     }
 
@@ -186,9 +213,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     }
 
     private func makeSettingsWindow() -> NSWindow {
-        let settingsView = SettingsView { [weak self] isVisible in
-            self?.updateChartVisibility(isVisible)
-        }
+        let settingsView = SettingsView(
+            onChartVisibilityChange: { [weak self] isVisible in
+                self?.updateChartVisibility(isVisible)
+            },
+            onEstimatedRemainingVisibilityChange: { [weak self] isVisible in
+                self?.updateEstimatedRemainingVisibility(isVisible)
+            }
+        )
         let window = NSWindow(
             contentRect: NSRect(x: 0, y: 0, width: 440, height: 250),
             styleMask: [.titled, .closable, .miniaturizable],
@@ -206,6 +238,20 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private func updateChartVisibility(_ isVisible: Bool) {
         graphMenuItem?.isHidden = !isVisible
         graphSeparatorItem?.isHidden = !isVisible
+    }
+
+    private func updateEstimatedRemainingVisibility(_ isVisible: Bool) {
+        estimatedRemainingTitleLabel?.isHidden = !isVisible
+        estimatedRemainingValueLabel?.isHidden = !isVisible
+
+        guard let batteryTitleLabel, let percentLabel,
+              let elapsedTimeTitleLabel, let elapsedTimeLabel else { return }
+
+        headerRows = [(batteryTitleLabel, percentLabel), (elapsedTimeTitleLabel, elapsedTimeLabel)]
+        if isVisible, let estimatedRemainingTitleLabel, let estimatedRemainingValueLabel {
+            headerRows.append((estimatedRemainingTitleLabel, estimatedRemainingValueLabel))
+        }
+        updateHeaderContentSize()
     }
 
     func windowWillClose(_ notification: Notification) {

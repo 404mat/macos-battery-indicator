@@ -3,16 +3,21 @@ import SwiftUI
 
 enum AppPreferences {
     static let showBatteryChartKey = "showBatteryChart"
+    static let showEstimatedRemainingKey = "showEstimatedRemaining"
 }
 
 struct SettingsView: View {
     let onChartVisibilityChange: (Bool) -> Void
+    let onEstimatedRemainingVisibilityChange: (Bool) -> Void
 
     var body: some View {
         TabView {
-            GeneralSettingsView(onChartVisibilityChange: onChartVisibilityChange)
+            MenuSettingsView(
+                onChartVisibilityChange: onChartVisibilityChange,
+                onEstimatedRemainingVisibilityChange: onEstimatedRemainingVisibilityChange
+            )
                 .tabItem {
-                    Label("General", systemImage: "gearshape")
+                    Label("Menu", systemImage: "menubar.rectangle")
                 }
 
             AboutSettingsView()
@@ -25,20 +30,26 @@ struct SettingsView: View {
     }
 }
 
-private struct GeneralSettingsView: View {
+private struct MenuSettingsView: View {
     @AppStorage(AppPreferences.showBatteryChartKey) private var showBatteryChart = true
+    @AppStorage(AppPreferences.showEstimatedRemainingKey) private var showEstimatedRemaining = true
 
     let onChartVisibilityChange: (Bool) -> Void
+    let onEstimatedRemainingVisibilityChange: (Bool) -> Void
 
     var body: some View {
         Form {
             Section("Sections") {
                 Toggle("Show battery chart in the menu", isOn: $showBatteryChart)
+                Toggle("Show time to empty in the menu", isOn: $showEstimatedRemaining)
             }
         }
         .formStyle(.grouped)
-        .onChange(of: showBatteryChart) { newValue in
+        .onChange(of: showBatteryChart) { _, newValue in
             onChartVisibilityChange(newValue)
+        }
+        .onChange(of: showEstimatedRemaining) { _, newValue in
+            onEstimatedRemainingVisibilityChange(newValue)
         }
     }
 }
