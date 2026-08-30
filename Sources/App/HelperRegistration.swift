@@ -1,67 +1,71 @@
-import Foundation
+import Combine
 import ServiceManagement
 
-final class HelperRegistration {
+final class HelperRegistration: ObservableObject {
     static let propertyListName = "com.mathias.BatteryIndicator.helper.plist"
 
+    @Published private(set) var status: SMAppService.Status
+    @Published private(set) var operationError: String?
+
     private let service = SMAppService.daemon(plistName: propertyListName)
-    private var statusTimer: Timer?
 
-    deinit {
-        statusTimer?.invalidate()
+    init() {
+        status = service.status
     }
 
-    func prepare(onEnabled: @escaping () -> Void) throws {
-        switch service.status {
+    var statusDescription: String {
+        switch status {
         case .enabled:
-            onEnabled()
-            return
-        case .notRegistered, .notFound:
-            do {
-                try service.register()
-            } catch {
-                guard service.status == .requiresApproval else { throw error }
-            }
+            return "Installed and enabled"
         case .requiresApproval:
-            break
+            return "Installed; approval required"
+        case .notRegistered:
+            return "Not installed"
+        case .notFound:
+            return "Helper unavailable in this build"
         @unknown default:
-            throw HelperRegistrationError.unknownStatus
+            return "Unknown"
         }
-
-        if service.status == .enabled {
-            onEnabled()
-            return
-        }
-
-        guard service.status == .requiresApproval else {
-            throw HelperRegistrationError.unknownStatus
-        }
-
-        SMAppService.openSystemSettingsLoginItems()
-        observeApproval(onEnabled: onEnabled)
     }
 
-    private func observeApproval(onEnabled: @escaping () -> Void) {
-        statusTimer?.invalidate()
-        let timer = Timer(timeInterval: 1, repeats: true) { [weak self] timer in
-            guard let self else {
-                timer.invalidate()
-                return
+    var canInstall: Bool {
+        status == .notRegistered
+    }
+
+    var canUnregister: Bool {
+        status == .enabled || status == .requiresApproval
+    }
+
+    func refresh() {
+        status = service.status
+    }
+
+    func install() {
+        operationError = nil
+        do {
+            try service.register()
+            refresh()
+            if status == .requiresApproval {
+                SMAppService.openSystemSettingsLoginItems()
             }
-            guard service.status == .enabled else { return }
-            timer.invalidate()
-            statusTimer = nil
-            onEnabled()
+        } catch {
+            operationError = error.localizedDescription
+            refresh()
         }
-        RunLoop.main.add(timer, forMode: .common)
-        statusTimer = timer
     }
-}
 
-private enum HelperRegistrationError: LocalizedError {
-    case unknownStatus
+    func unregister() {
+        operationError = nil
+        do {
+            try service.unregister()
+            refresh()
+        } catch {
+            operationError = error.localizedDescription
+            refresh()
+        }
+    }
 
-    var errorDescription: String? {
-        "The battery helper has an unknown registration status."
+    func openLoginItems() {
+        SMAppService.openSystemSettingsLoginItems()
     }
 }

@@ -1,6 +1,5 @@
 import BatteryCore
 import BatteryData
-import BatteryXPC
 import Foundation
 
 public final class BatteryIndicatorModel: ObservableObject {
@@ -9,7 +8,7 @@ public final class BatteryIndicatorModel: ObservableObject {
     @Published public private(set) var batteryGraph: BatteryGraph?
     @Published public private(set) var elapsedTimeDescription: String?
     @Published public private(set) var estimatedRemainingDescription: String?
-    @Published public private(set) var isHelperConnected = false
+    @Published public private(set) var isConnected = false
 
     public var percentDescription: String {
         chargingMode == .error ? "N/A" : "\(batteryLevel)%"
@@ -19,12 +18,14 @@ public final class BatteryIndicatorModel: ObservableObject {
 
     public init(service: BatteryService) {
         self.service = service
-        service.onStateChange = { [weak self] payload in
-            self?.receiveState(payload)
+        service.onStateChange = { [weak self] state in
+            DispatchQueue.main.async {
+                self?.apply(state)
+            }
         }
         service.onConnectionChange = { [weak self] connected in
             DispatchQueue.main.async {
-                self?.isHelperConnected = connected
+                self?.isConnected = connected
                 if connected {
                     self?.refreshSnapshot()
                 } else {
@@ -44,21 +45,12 @@ public final class BatteryIndicatorModel: ObservableObject {
 
     public func refreshSnapshot() {
         service.fetchSnapshot { [weak self] result in
-            guard case .success(let payload) = result,
-                  let snapshot = try? BatteryXPCCodec.decode(BatterySnapshot.self, from: payload)
-            else { return }
+            guard case .success(let snapshot) = result else { return }
             DispatchQueue.main.async {
                 self?.apply(snapshot.state)
                 self?.batteryGraph = snapshot.graph
                 self?.elapsedTimeDescription = snapshot.metrics.elapsedTimeDescription
             }
-        }
-    }
-
-    private func receiveState(_ payload: Data) {
-        guard let state = try? BatteryXPCCodec.decode(BatteryState.self, from: payload) else { return }
-        DispatchQueue.main.async { [weak self] in
-            self?.apply(state)
         }
     }
 

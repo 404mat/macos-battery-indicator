@@ -7,6 +7,7 @@ enum AppPreferences {
 }
 
 struct SettingsView: View {
+    @ObservedObject var helperRegistration: HelperRegistration
     let onChartVisibilityChange: (Bool) -> Void
     let onEstimatedRemainingVisibilityChange: (Bool) -> Void
 
@@ -20,6 +21,11 @@ struct SettingsView: View {
                     Label("Menu", systemImage: "menubar.rectangle")
                 }
 
+            HelperSettingsView(registration: helperRegistration)
+                .tabItem {
+                    Label("Charge Control", systemImage: "battery.75percent")
+                }
+
             AboutSettingsView()
                 .tabItem {
                     Label("About", systemImage: "info.circle")
@@ -27,6 +33,53 @@ struct SettingsView: View {
         }
         .padding(20)
         .frame(width: 440, height: 250)
+    }
+}
+
+private struct HelperSettingsView: View {
+    @ObservedObject var registration: HelperRegistration
+
+    var body: some View {
+        Form {
+            Section("Privileged Helper") {
+                LabeledContent("Status", value: registration.statusDescription)
+
+                Text("The helper is only required for charge-limit controls. Battery monitoring and history work without it.")
+                    .font(.callout)
+                    .foregroundStyle(.secondary)
+
+                if let error = registration.operationError {
+                    Text(error)
+                        .font(.callout)
+                        .foregroundStyle(.red)
+                }
+
+                HStack {
+                    Button("Install Helper") {
+                        registration.install()
+                    }
+                    .disabled(!registration.canInstall)
+
+                    Button("Unregister Helper", role: .destructive) {
+                        registration.unregister()
+                    }
+                    .disabled(!registration.canUnregister)
+
+                    if registration.status == .requiresApproval {
+                        Button("Open Login Items") {
+                            registration.openLoginItems()
+                        }
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .task {
+            while !Task.isCancelled {
+                registration.refresh()
+                try? await Task.sleep(for: .seconds(1))
+            }
+        }
     }
 }
 
