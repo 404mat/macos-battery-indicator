@@ -16,9 +16,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var headerRows: [(label: NSTextField, value: NSTextField)] = []
     private var graphMenuItem: NSMenuItem?
     private var graphSeparatorItem: NSMenuItem?
-    private let helperClient = HelperClient()
     private let helperRegistration = HelperRegistration()
-    private lazy var model = BatteryIndicatorModel(service: helperClient)
+    private let batteryService = LocalBatteryService()
+    private lazy var model = BatteryIndicatorModel(service: batteryService)
     private var cancellables = Set<AnyCancellable>()
 
     private enum HeaderMetrics {
@@ -60,13 +60,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             }
             .store(in: &cancellables)
 
-        do {
-            try helperRegistration.prepare { [weak self] in
-                self?.model.start()
-            }
-        } catch {
-            NSLog("Unable to register battery helper: %@", error.localizedDescription)
-        }
+        model.start()
     }
 
     func applicationWillTerminate(_ notification: Notification) {
@@ -214,6 +208,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     private func makeSettingsWindow() -> NSWindow {
         let settingsView = SettingsView(
+            helperRegistration: helperRegistration,
             onChartVisibilityChange: { [weak self] isVisible in
                 self?.updateChartVisibility(isVisible)
             },

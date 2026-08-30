@@ -18,11 +18,11 @@ let package = Package(
         ),
         .target(
             name: "BatteryXPC",
-            dependencies: ["BatteryCore", "BatteryData"]
+            dependencies: []
         ),
         .target(
             name: "BatteryUI",
-            dependencies: ["BatteryCore", "BatteryData", "BatteryXPC"]
+            dependencies: ["BatteryCore", "BatteryData"]
         ),
     ]
 )
