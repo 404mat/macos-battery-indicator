@@ -1,4 +1,5 @@
 import AppKit
+import BatteryCore
 import BatteryUI
 import Combine
 import SwiftUI
@@ -42,6 +43,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
             .combineLatest(model.$chargingMode)
             .sink { [weak self] level, mode in
                 self?.percentLabel?.stringValue = mode == .error ? "N/A" : "\(level)%"
+                self?.updateStatusItemImage(level: level, mode: mode)
                 self?.updateHeaderContentSize()
             }
             .store(in: &cancellables)
@@ -73,18 +75,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         statusItem = item
 
         guard let button = item.button else { return }
-        button.image = NSImage()
-        button.subviews.forEach { $0.removeFromSuperview() }
+        button.imagePosition = .imageOnly
+        button.imageScaling = .scaleNone
+        updateStatusItemImage(level: model.batteryLevel, mode: model.chargingMode)
+    }
 
-        let hostingView = NSHostingView(rootView: BatteryIndicatorView(model: model))
-        hostingView.translatesAutoresizingMaskIntoConstraints = false
-        button.addSubview(hostingView)
-        NSLayoutConstraint.activate([
-            hostingView.leadingAnchor.constraint(equalTo: button.leadingAnchor),
-            hostingView.trailingAnchor.constraint(equalTo: button.trailingAnchor),
-            hostingView.topAnchor.constraint(equalTo: button.topAnchor),
-            hostingView.bottomAnchor.constraint(equalTo: button.bottomAnchor),
-        ])
+    private func updateStatusItemImage(level: Int, mode: ChargingMode) {
+        statusItem?.button?.image = BatteryStatusImage.make(level: level, mode: mode)
     }
 
     private func buildMenu() -> NSMenu {
