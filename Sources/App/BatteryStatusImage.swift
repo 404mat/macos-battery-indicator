@@ -11,7 +11,7 @@ enum BatteryStatusImage {
         static let height: CGFloat = 13
         static let width: CGFloat = 31
         static let knobGap: CGFloat = 1.5
-        static let knobWidth: CGFloat = height * 0.18
+        static let knobWidth: CGFloat = height * 0.12
         static let knobHeight: CGFloat = height * 0.36
         static let cornerRadius: CGFloat = height * 0.36
         static let bodyCenterOffsetX: CGFloat = -(knobGap + knobWidth) / 2
@@ -113,15 +113,12 @@ enum BatteryStatusImage {
     }
 
     private static func knobPath(in rect: NSRect) -> NSBezierPath {
-        let path = NSBezierPath()
-        path.move(to: NSPoint(x: rect.minX, y: rect.minY))
-        path.curve(
-            to: NSPoint(x: rect.minX, y: rect.maxY),
-            controlPoint1: NSPoint(x: rect.minX + rect.width * 4 / 3, y: rect.minY),
-            controlPoint2: NSPoint(x: rect.minX + rect.width * 4 / 3, y: rect.maxY)
+        let radius = rect.width / 2
+        return NSBezierPath(
+            roundedRect: rect,
+            xRadius: radius,
+            yRadius: radius
         )
-        path.close()
-        return path
     }
 
     private static func boltPath(in rect: NSRect) -> NSBezierPath {
