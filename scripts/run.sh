@@ -4,7 +4,6 @@ set -euo pipefail
 
 script_directory="${0:A:h}"
 project_directory="${script_directory:h}"
-helper_label="com.mathias.BatteryIndicator.helper"
 open_app=true
 
 if [[ "${1:-}" == "--build-only" ]]; then
@@ -44,17 +43,8 @@ fi
 
 print "Signing with team ${team_id} (${identity_name})"
 
-helper_registration=""
-if ! helper_registration="$(/bin/launchctl print "system/${helper_label}" 2>&1)"; then
-    helper_registration=""
-fi
-
-# Do not overwrite executables while the signed app or helper is running.
+# Do not overwrite the executable while the app is running.
 /usr/bin/killall BatteryIndicator 2>/dev/null || true
-if [[ "${helper_registration}" == *"state = running"* ]]; then
-    print "Stopping the installed battery helper (administrator access required)…"
-    /usr/bin/sudo /bin/launchctl kill SIGKILL "system/${helper_label}"
-fi
 
 cd "${project_directory}"
 /usr/bin/xcodebuild \
@@ -67,22 +57,6 @@ cd "${project_directory}"
     CODE_SIGN_IDENTITY="${identity_name}" \
     DEVELOPMENT_TEAM="${team_id}" \
     build
-
-# Xcode injects development entitlements into command-line targets even when
-# they do not request capabilities. Re-sign the standalone daemon without
-# those entitlements, then reseal the containing app bundle.
-/usr/bin/codesign \
-    --force \
-    --options runtime \
-    --timestamp=none \
-    --sign "${identity_name}" \
-    "${app_path}/Contents/MacOS/BatteryHelper"
-/usr/bin/codesign \
-    --force \
-    --options runtime \
-    --timestamp=none \
-    --sign "${identity_name}" \
-    "${app_path}"
 
 if ${open_app}; then
     /usr/bin/open "${app_path}"

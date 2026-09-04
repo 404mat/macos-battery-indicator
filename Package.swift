@@ -3,11 +3,10 @@ import PackageDescription
 
 let package = Package(
     name: "BatteryIndicator",
-    platforms: [.macOS("26.0")],
+    platforms: [.macOS("27.0")],
     products: [
         .library(name: "BatteryCore", targets: ["BatteryCore"]),
         .library(name: "BatteryData", targets: ["BatteryData"]),
-        .library(name: "BatteryXPC", targets: ["BatteryXPC"]),
         .library(name: "BatteryUI", targets: ["BatteryUI"]),
     ],
     targets: [
@@ -15,10 +14,6 @@ let package = Package(
         .target(
             name: "BatteryData",
             dependencies: ["BatteryCore"]
-        ),
-        .target(
-            name: "BatteryXPC",
-            dependencies: []
         ),
         .target(
             name: "BatteryUI",
