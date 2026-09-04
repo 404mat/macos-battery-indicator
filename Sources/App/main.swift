@@ -17,8 +17,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var headerRows: [(label: NSTextField, value: NSTextField)] = []
     private var graphMenuItem: NSMenuItem?
     private var graphSeparatorItem: NSMenuItem?
-    private let batteryService = LocalBatteryService()
-    private lazy var model = BatteryIndicatorModel(service: batteryService)
+    private let model = BatteryAppModel()
     private var cancellables = Set<AnyCancellable>()
 
     private enum HeaderMetrics {
@@ -38,26 +37,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         ])
         setUpStatusItem()
 
-        model.$batteryLevel
-            .combineLatest(model.$chargingMode)
-            .sink { [weak self] level, mode in
-                self?.percentLabel?.stringValue = mode == .error ? "N/A" : "\(level)%"
-                self?.updateStatusItemImage(level: level, mode: mode)
-                self?.updateHeaderContentSize()
-            }
-            .store(in: &cancellables)
-
-        model.$elapsedTimeDescription
-            .sink { [weak self] description in
-                self?.elapsedTimeLabel?.stringValue = description ?? "–"
-                self?.updateHeaderContentSize()
-            }
-            .store(in: &cancellables)
-
-        model.$estimatedRemainingDescription
-            .sink { [weak self] description in
-                self?.estimatedRemainingValueLabel?.stringValue = description ?? "–"
-                self?.updateHeaderContentSize()
+        model.$snapshot
+            .sink { [weak self] snapshot in
+                self?.apply(snapshot)
             }
             .store(in: &cancellables)
 
@@ -76,7 +58,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         guard let button = item.button else { return }
         button.imagePosition = .imageOnly
         button.imageScaling = .scaleNone
-        updateStatusItemImage(level: model.batteryLevel, mode: model.chargingMode)
+        updateStatusItemImage(level: model.snapshot.state.level, mode: model.snapshot.state.chargingMode)
     }
 
     private func updateStatusItemImage(level: Int, mode: ChargingMode) {
@@ -116,11 +98,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         container.autoresizingMask = [.width]
 
         let title = makeLabel("Battery", font: .boldSystemFont(ofSize: 13))
-        let percent = makeLabel(model.percentDescription, font: .boldSystemFont(ofSize: 13))
+        let percent = makeLabel(percentDescription, font: .boldSystemFont(ofSize: 13))
         let elapsedTitle = makeLabel("Elapsed Time", font: .systemFont(ofSize: 12), secondary: true)
-        let elapsedValue = makeLabel("–", font: .systemFont(ofSize: 12), secondary: true)
+        let elapsedValue = makeLabel(model.snapshot.metrics.elapsedTimeDescription ?? "–", font: .systemFont(ofSize: 12), secondary: true)
         let estimatedTitle = makeLabel("Time to empty", font: .systemFont(ofSize: 12), secondary: true)
-        let estimatedValue = makeLabel("–", font: .systemFont(ofSize: 12), secondary: true)
+        let estimatedValue = makeLabel(model.snapshot.metrics.estimatedRemainingDescription ?? "–", font: .systemFont(ofSize: 12), secondary: true)
 
         [title, percent, elapsedTitle, elapsedValue, estimatedTitle, estimatedValue].forEach(container.addSubview)
         batteryTitleLabel = title
@@ -167,7 +149,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         let width = headerView?.frame.width ?? 220
         let container = NSView(frame: NSRect(x: 0, y: 0, width: width, height: BatteryGraphLayout.totalHeight))
         container.autoresizingMask = [.width]
-        let hostingView = NSHostingView(rootView: BatteryGraphView(model: model))
+        let hostingView = NSHostingView(rootView: BatteryGraphMenuContent(model: model))
         hostingView.frame = container.bounds
         hostingView.autoresizingMask = [.width, .height]
         container.addSubview(hostingView)
@@ -192,7 +174,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         updateEstimatedRemainingVisibility(
             UserDefaults.standard.bool(forKey: AppPreferences.showEstimatedRemainingKey)
         )
-        model.refreshSnapshot()
+        model.refresh()
     }
 
     @objc private func openSettings() {
@@ -250,8 +232,30 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         updateHeaderContentSize()
     }
 
+    private var percentDescription: String {
+        let state = model.snapshot.state
+        return state.chargingMode == .error ? "N/A" : "\(state.level)%"
+    }
+
+    private func apply(_ snapshot: BatterySnapshot) {
+        let state = snapshot.state
+        percentLabel?.stringValue = state.chargingMode == .error ? "N/A" : "\(state.level)%"
+        elapsedTimeLabel?.stringValue = snapshot.metrics.elapsedTimeDescription ?? "–"
+        estimatedRemainingValueLabel?.stringValue = snapshot.metrics.estimatedRemainingDescription ?? "–"
+        updateStatusItemImage(level: state.level, mode: state.chargingMode)
+        updateHeaderContentSize()
+    }
+
     func windowWillClose(_ notification: Notification) {
         NSApp.hide(nil)
+    }
+}
+
+private struct BatteryGraphMenuContent: View {
+    @ObservedObject var model: BatteryAppModel
+
+    var body: some View {
+        BatteryGraphView(graph: model.snapshot.graph)
     }
 }
 

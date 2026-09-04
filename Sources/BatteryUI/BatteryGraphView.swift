@@ -16,10 +16,10 @@ public enum BatteryGraphLayout {
 }
 
 public struct BatteryGraphView: View {
-    @ObservedObject var model: BatteryIndicatorModel
+    let graph: BatteryGraph?
 
-    public init(model: BatteryIndicatorModel) {
-        self.model = model
+    public init(graph: BatteryGraph?) {
+        self.graph = graph
     }
 
     public var body: some View {
@@ -28,7 +28,7 @@ public struct BatteryGraphView: View {
                 .font(.system(size: 13))
                 .foregroundColor(.secondary)
                 .frame(height: BatteryGraphLayout.titleHeight, alignment: .leading)
-            if let graph = model.batteryGraph {
+            if let graph {
                 BatteryGraphCanvas(graph: graph)
                     .frame(height: BatteryGraphLayout.plotHeight + BatteryGraphLayout.timeAxisHeight)
             } else {
