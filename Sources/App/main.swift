@@ -198,8 +198,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     @objc private func openSettings() {
         let window = settingsWindow ?? makeSettingsWindow()
         settingsWindow = window
-        window.makeKeyAndOrderFront(nil)
+        window.center()
         NSApp.activate(ignoringOtherApps: true)
+        window.orderFrontRegardless()
+        window.makeKey()
+        window.makeFirstResponder(window.contentView)
     }
 
     private func makeSettingsWindow() -> NSWindow {
@@ -213,11 +216,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
         )
         let window = NSWindow(
             contentRect: NSRect(origin: .zero, size: SettingsView.contentSize),
-            styleMask: [.titled, .closable, .miniaturizable],
+            styleMask: [.titled, .closable, .miniaturizable, .fullSizeContentView],
             backing: .buffered,
             defer: false
         )
-        window.title = "Settings"
+        window.titleVisibility = .hidden
+        window.titlebarAppearsTransparent = true
+        window.titlebarSeparatorStyle = .none
+        window.isMovableByWindowBackground = true
         window.delegate = self
         window.contentViewController = NSHostingController(rootView: settingsView)
         window.isReleasedWhenClosed = false

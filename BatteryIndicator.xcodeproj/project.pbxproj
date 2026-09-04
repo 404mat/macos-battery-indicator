@@ -10,6 +10,9 @@
 		100000000000000000000010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000010 /* SettingsView.swift */; };
 		100000000000000000000011 /* LocalBatteryService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000011 /* LocalBatteryService.swift */; };
 		100000000000000000000014 /* BatteryStatusImage.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000014 /* BatteryStatusImage.swift */; };
+		100000000000000000000015 /* menu-bar.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000015 /* menu-bar.png */; };
+		100000000000000000000016 /* charging.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000016 /* charging.png */; };
+		100000000000000000000017 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000017 /* about.png */; };
 		10000000000000000000000A /* BatteryUI in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000001 /* BatteryUI */; };
 		100000000000000000000012 /* BatteryCore in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000006 /* BatteryCore */; };
 		100000000000000000000013 /* BatteryData in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000007 /* BatteryData */; };
@@ -20,6 +23,9 @@
 		200000000000000000000010 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/App/SettingsView.swift; sourceTree = SOURCE_ROOT; };
 		200000000000000000000011 /* LocalBatteryService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/App/LocalBatteryService.swift; sourceTree = SOURCE_ROOT; };
 		200000000000000000000014 /* BatteryStatusImage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/App/BatteryStatusImage.swift; sourceTree = SOURCE_ROOT; };
+		200000000000000000000015 /* menu-bar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/menu-bar.png; sourceTree = SOURCE_ROOT; };
+		200000000000000000000016 /* charging.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/charging.png; sourceTree = SOURCE_ROOT; };
+		200000000000000000000017 /* about.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/about.png; sourceTree = SOURCE_ROOT; };
 		200000000000000000000008 /* App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/App-Info.plist; sourceTree = SOURCE_ROOT; };
 		20000000000000000000000C /* BatteryIndicator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BatteryIndicator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
@@ -36,6 +42,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXResourcesBuildPhase section */
+		300000000000000000000003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				100000000000000000000015 /* menu-bar.png in Resources */,
+				100000000000000000000016 /* charging.png in Resources */,
+				100000000000000000000017 /* about.png in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
 
 /* Begin PBXGroup section */
 		400000000000000000000001 = {
@@ -54,6 +73,9 @@
 				200000000000000000000010 /* SettingsView.swift */,
 				200000000000000000000011 /* LocalBatteryService.swift */,
 				200000000000000000000014 /* BatteryStatusImage.swift */,
+				200000000000000000000015 /* menu-bar.png */,
+				200000000000000000000016 /* charging.png */,
+				200000000000000000000017 /* about.png */,
 			);
 			name = App;
 			sourceTree = "<group>";
@@ -83,6 +105,7 @@
 			buildPhases = (
 				300000000000000000000001 /* Sources */,
 				300000000000000000000002 /* Frameworks */,
+				300000000000000000000003 /* Resources */,
 			);
 			buildRules = ();
 			dependencies = ();
