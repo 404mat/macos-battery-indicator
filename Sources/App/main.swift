@@ -17,7 +17,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
     private var headerRows: [(label: NSTextField, value: NSTextField)] = []
     private var graphMenuItem: NSMenuItem?
     private var graphSeparatorItem: NSMenuItem?
-    private let helperRegistration = HelperRegistration()
     private let batteryService = LocalBatteryService()
     private lazy var model = BatteryIndicatorModel(service: batteryService)
     private var cancellables = Set<AnyCancellable>()
@@ -205,7 +204,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate, NSMe
 
     private func makeSettingsWindow() -> NSWindow {
         let settingsView = SettingsView(
-            helperRegistration: helperRegistration,
             onChartVisibilityChange: { [weak self] isVisible in
                 self?.updateChartVisibility(isVisible)
             },

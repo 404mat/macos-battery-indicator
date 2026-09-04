@@ -9,7 +9,6 @@ enum AppPreferences {
 struct SettingsView: View {
     static let contentSize = NSSize(width: 560, height: 300)
 
-    @ObservedObject var helperRegistration: HelperRegistration
     let onChartVisibilityChange: (Bool) -> Void
     let onEstimatedRemainingVisibilityChange: (Bool) -> Void
 
@@ -23,7 +22,7 @@ struct SettingsView: View {
                     Label("Menu", systemImage: "menubar.rectangle")
                 }
 
-            HelperSettingsView(registration: helperRegistration)
+            NativeChargeLimitSettingsView()
                 .tabItem {
                     Label("Charge Control", systemImage: "battery.75percent")
                 }
@@ -39,50 +38,25 @@ struct SettingsView: View {
     }
 }
 
-private struct HelperSettingsView: View {
-    @ObservedObject var registration: HelperRegistration
+private struct NativeChargeLimitSettingsView: View {
+    private static let chargingSettingsURL = URL(
+        string: "x-apple.systempreferences:com.apple.Battery-Settings.extension?charging"
+    )!
 
     var body: some View {
         Form {
-            Section("Privileged Helper") {
-                LabeledContent("Status", value: registration.statusDescription)
-
-                Text("The helper is only required for charge-limit controls. Battery monitoring and history work without it.")
+            Section("Charging Limit") {
+                Text("macOS 27 manages charging limits natively. Choose a maximum charge level from 80% to 100% in Battery settings.")
                     .font(.callout)
                     .foregroundStyle(.secondary)
 
-                if let error = registration.operationError {
-                    Text(error)
-                        .font(.callout)
-                        .foregroundStyle(.red)
+                Button("Open Charging Settings") {
+                    NSWorkspace.shared.open(Self.chargingSettingsURL)
                 }
-
-                HStack {
-                    Button("Install Helper") {
-                        registration.install()
-                    }
-                    .disabled(!registration.canInstall)
-
-                    Button("Unregister Helper", role: .destructive) {
-                        registration.unregister()
-                    }
-                    .disabled(!registration.canUnregister)
-
-                    if registration.status == .requiresApproval {
-                        Button("Open Login Items") {
-                            registration.openLoginItems()
-                        }
-                    }
-                }
+                .accessibilityLabel("Open Charging Settings")
             }
         }
         .formStyle(.grouped)
-        .task {
-            while !Task.isCancelled {
-                registration.refresh()
-                try? await Task.sleep(for: .seconds(1))
-            }
-        }
     }
 }
 
