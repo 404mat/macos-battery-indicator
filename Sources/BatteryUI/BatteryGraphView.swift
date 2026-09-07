@@ -7,11 +7,13 @@ public enum BatteryGraphLayout {
     public static let titleHeight: CGFloat = 16
     public static let titleSpacing: CGFloat = 6
     public static let plotHeight: CGFloat = 90
+    public static let chargingIndicatorHeight: CGFloat = 13
     public static let timeAxisHeight: CGFloat = 14
     public static let bottomPadding: CGFloat = 8
 
     public static var totalHeight: CGFloat {
-        topPadding + titleHeight + titleSpacing + plotHeight + timeAxisHeight + bottomPadding
+        topPadding + titleHeight + titleSpacing + plotHeight + chargingIndicatorHeight
+            + timeAxisHeight + bottomPadding
     }
 }
 
@@ -30,7 +32,11 @@ public struct BatteryGraphView: View {
                 .frame(height: BatteryGraphLayout.titleHeight, alignment: .leading)
             if let graph {
                 BatteryGraphCanvas(graph: graph)
-                    .frame(height: BatteryGraphLayout.plotHeight + BatteryGraphLayout.timeAxisHeight)
+                    .frame(
+                        height: BatteryGraphLayout.plotHeight
+                            + BatteryGraphLayout.chargingIndicatorHeight
+                            + BatteryGraphLayout.timeAxisHeight
+                    )
             } else {
                 HStack(spacing: 8) {
                     ProgressView()
@@ -53,13 +59,16 @@ private struct BatteryGraphCanvas: View {
     let graph: BatteryGraph
 
     private enum Metrics {
-        static let slotWidth: CGFloat = 2.8
-        static let barFill: CGFloat = 0.55
+        static let slotWidth: CGFloat = 4
+        static let barFill: CGFloat = 0.8
         static let minBarCount = 24
         static let minBarHeight: CGFloat = 2
         static let axisLabelWidth: CGFloat = 36
         static let timeLabelWidth: CGFloat = 34
         static let timeLabelHeight: CGFloat = 12
+        static let chargingLineWidth: CGFloat = 3
+        static let chargingBoltGap: CGFloat = 12
+        static let minimumBoltSegmentWidth: CGFloat = 28
     }
 
     private var barColor: Color {
@@ -80,11 +89,14 @@ private struct BatteryGraphCanvas: View {
                 x: 0,
                 y: 0,
                 width: size.width - Metrics.axisLabelWidth,
-                height: size.height - BatteryGraphLayout.timeAxisHeight
+                height: size.height
+                    - BatteryGraphLayout.chargingIndicatorHeight
+                    - BatteryGraphLayout.timeAxisHeight
             )
             drawGrid(in: &context, plotRect: plotRect)
             drawPowerHighlights(in: &context, plotRect: plotRect)
             drawBars(in: &context, plotRect: plotRect)
+            drawChargingIndicators(in: &context, plotRect: plotRect)
             drawAxisLabels(in: &context, plotRect: plotRect)
         }
     }
@@ -140,6 +152,67 @@ private struct BatteryGraphCanvas: View {
         }
     }
 
+    private func drawChargingIndicators(in context: inout GraphicsContext, plotRect: CGRect) {
+        let centerY = plotRect.maxY + BatteryGraphLayout.chargingIndicatorHeight / 2
+
+        for segment in graph.highlightSegments where segment.kind == .charging {
+            let startX = max(x(for: segment.start, plotRect: plotRect), plotRect.minX)
+            let endX = min(x(for: segment.end, plotRect: plotRect), plotRect.maxX)
+            let width = endX - startX
+            guard width >= Metrics.chargingLineWidth else { continue }
+
+            if width >= Metrics.minimumBoltSegmentWidth {
+                let centerX = (startX + endX) / 2
+                drawChargingLine(
+                    in: &context,
+                    from: startX,
+                    to: centerX - Metrics.chargingBoltGap / 2,
+                    centerY: centerY
+                )
+                drawChargingLine(
+                    in: &context,
+                    from: centerX + Metrics.chargingBoltGap / 2,
+                    to: endX,
+                    centerY: centerY
+                )
+                drawChargingBolt(in: &context, center: CGPoint(x: centerX, y: centerY))
+            } else {
+                drawChargingLine(in: &context, from: startX, to: endX, centerY: centerY)
+            }
+        }
+    }
+
+    private func drawChargingLine(
+        in context: inout GraphicsContext,
+        from startX: CGFloat,
+        to endX: CGFloat,
+        centerY: CGFloat
+    ) {
+        guard endX > startX else { return }
+        let rect = CGRect(
+            x: startX,
+            y: centerY - Metrics.chargingLineWidth / 2,
+            width: endX - startX,
+            height: Metrics.chargingLineWidth
+        )
+        context.fill(
+            Path(roundedRect: rect, cornerRadius: Metrics.chargingLineWidth / 2, style: .continuous),
+            with: .color(barColor)
+        )
+    }
+
+    private func drawChargingBolt(in context: inout GraphicsContext, center: CGPoint) {
+        var bolt = Path()
+        bolt.move(to: CGPoint(x: center.x + 1, y: center.y - 6))
+        bolt.addLine(to: CGPoint(x: center.x - 4, y: center.y + 1))
+        bolt.addLine(to: CGPoint(x: center.x - 0.5, y: center.y + 1))
+        bolt.addLine(to: CGPoint(x: center.x - 2, y: center.y + 6))
+        bolt.addLine(to: CGPoint(x: center.x + 4, y: center.y - 2))
+        bolt.addLine(to: CGPoint(x: center.x + 0.5, y: center.y - 2))
+        bolt.closeSubpath()
+        context.fill(bolt, with: .color(barColor))
+    }
+
     private func drawBars(in context: inout GraphicsContext, plotRect: CGRect) {
         let barCount = max(Metrics.minBarCount, Int(plotRect.width / Metrics.slotWidth))
         let slot = plotRect.width / CGFloat(barCount)
@@ -152,10 +225,28 @@ private struct BatteryGraphCanvas: View {
             let height = max(plotRect.height * CGFloat(level) / 100, Metrics.minBarHeight)
             let barX = plotRect.minX + CGFloat(index) * slot + (slot - barWidth) / 2
             let rect = CGRect(x: barX, y: plotRect.maxY - height, width: barWidth, height: height)
-            let path = Path(roundedRect: rect, cornerRadius: barWidth / 2, style: .continuous)
             let color = level <= 10 ? lowLevelColor : barColor
-            context.fill(path, with: .color(color))
+            context.fill(topRoundedBarPath(in: rect), with: .color(color))
         }
+    }
+
+    private func topRoundedBarPath(in rect: CGRect) -> Path {
+        let radius = min(rect.width / 2, rect.height / 2)
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.minY + radius))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.minX + radius, y: rect.minY),
+            control: CGPoint(x: rect.minX, y: rect.minY)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX - radius, y: rect.minY))
+        path.addQuadCurve(
+            to: CGPoint(x: rect.maxX, y: rect.minY + radius),
+            control: CGPoint(x: rect.maxX, y: rect.minY)
+        )
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.closeSubpath()
+        return path
     }
 
     private func drawAxisLabels(in context: inout GraphicsContext, plotRect: CGRect) {
@@ -179,7 +270,7 @@ private struct BatteryGraphCanvas: View {
             let tickX = x(for: tick, plotRect: plotRect)
             let rect = CGRect(
                 x: min(max(tickX - Metrics.timeLabelWidth / 2, 0), plotRect.width - Metrics.timeLabelWidth),
-                y: plotRect.maxY + 2,
+                y: plotRect.maxY + BatteryGraphLayout.chargingIndicatorHeight + 2,
                 width: Metrics.timeLabelWidth,
                 height: Metrics.timeLabelHeight
             )
