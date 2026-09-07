@@ -66,7 +66,7 @@ private struct BatteryGraphCanvas: View {
         static let axisLabelWidth: CGFloat = 36
         static let timeLabelWidth: CGFloat = 34
         static let timeLabelHeight: CGFloat = 12
-        static let chargingLineWidth: CGFloat = 5
+        static let chargingLineWidth: CGFloat = 3
         static let chargingBoltGap: CGFloat = 12
         static let minimumBoltSegmentWidth: CGFloat = 28
     }
