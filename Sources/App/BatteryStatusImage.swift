@@ -20,6 +20,8 @@ enum BatteryStatusImage {
     private static let imageHeight: CGFloat = 18
     private static let boltWidth: CGFloat = 11
     private static let boltHeight: CGFloat = 17
+    private static let pauseWidth: CGFloat = 9
+    private static let pauseHeight: CGFloat = 15
 
     static func make(level: Int, mode: ChargingMode) -> NSImage {
         let size = NSSize(
@@ -100,13 +102,31 @@ enum BatteryStatusImage {
 
             NSColor.labelColor.setFill()
             bolt.fill()
+        } else if mode == .paused {
+            let pauseRect = NSRect(
+                x: bounds.midX + metrics.bodyCenterOffsetX - pauseWidth / 2,
+                y: bounds.midY - pauseHeight / 2,
+                width: pauseWidth,
+                height: pauseHeight
+            )
+            let pause = pausePath(in: pauseRect)
+
+            NSGraphicsContext.saveGraphicsState()
+            NSGraphicsContext.current?.compositingOperation = .clear
+            pause.fill()
+            pause.lineWidth = 3
+            pause.stroke()
+            NSGraphicsContext.restoreGraphicsState()
+
+            NSColor.labelColor.setFill()
+            pause.fill()
         } else if mode == .error {
             drawErrorSymbol(centeredAt: NSPoint(x: bounds.midX - 1, y: bounds.midY))
         }
     }
 
     private static func fillColor(level: Int, mode: ChargingMode) -> NSColor {
-        if mode == .charging {
+        if mode == .charging || mode == .paused {
             return .systemGreen
         }
         return level <= 10 ? .systemRed : .labelColor
@@ -152,6 +172,23 @@ enum BatteryStatusImage {
         return path
     }
 
+    private static func pausePath(in rect: NSRect) -> NSBezierPath {
+        let barWidth: CGFloat = 2.9
+        let radius = barWidth * 0.35
+        let path = NSBezierPath()
+        path.append(NSBezierPath(
+            roundedRect: NSRect(x: rect.minX, y: rect.minY, width: barWidth, height: rect.height),
+            xRadius: radius,
+            yRadius: radius
+        ))
+        path.append(NSBezierPath(
+            roundedRect: NSRect(x: rect.maxX - barWidth, y: rect.minY, width: barWidth, height: rect.height),
+            xRadius: radius,
+            yRadius: radius
+        ))
+        return path
+    }
+
     private static func offsetPoint(
         from point: NSPoint,
         toward target: NSPoint,
@@ -183,6 +220,8 @@ enum BatteryStatusImage {
         switch mode {
         case .charging:
             return "Battery charging, \(level) percent"
+        case .paused:
+            return "Battery charging paused at limit, \(level) percent"
         case .pluggedIn:
             return "Battery plugged in, \(level) percent"
         case .discharging:

@@ -1,4 +1,5 @@
 import Foundation
+import IOKit
 import IOKit.ps
 
 public protocol BatteryReading: AnyObject {
@@ -6,6 +7,11 @@ public protocol BatteryReading: AnyObject {
 }
 
 public final class BatteryReader: BatteryReading {
+    // Apple does not expose the native charge limit through IOPowerSources.
+    // On supported Macs, AppleSmartBattery publishes an active limiter as bit
+    // 24 of its NotChargingReason bit field.
+    private static let chargeLimitReason: UInt64 = 1 << 24
+
     public init() {}
 
     public func read() -> BatteryState {
@@ -23,7 +29,18 @@ public final class BatteryReader: BatteryReading {
             let powerSourceState = info[kIOPSPowerSourceStateKey as String] as? String
             let isPluggedIn = powerSourceState == kIOPSACPowerValue as String
             let isCharging = info[kIOPSIsChargingKey as String] as? Bool ?? false
-            let mode: ChargingMode = isCharging ? .charging : (isPluggedIn ? .pluggedIn : .discharging)
+            let isPausedAtChargeLimit = isPluggedIn
+                && !isCharging
+                && Self.isNativeChargeLimitActive()
+            let mode: ChargingMode = if isCharging {
+                .charging
+            } else if isPausedAtChargeLimit {
+                .paused
+            } else if isPluggedIn {
+                .pluggedIn
+            } else {
+                .discharging
+            }
             let timeToEmpty = info[kIOPSTimeToEmptyKey as String] as? Int
 
             return BatteryState(
@@ -35,5 +52,26 @@ public final class BatteryReader: BatteryReading {
         }
 
         return .unavailable()
+    }
+
+    private static func isNativeChargeLimitActive() -> Bool {
+        let service = IOServiceGetMatchingService(
+            kIOMainPortDefault,
+            IOServiceMatching("AppleSmartBattery")
+        )
+        guard service != IO_OBJECT_NULL else { return false }
+        defer { IOObjectRelease(service) }
+
+        guard
+            let chargerData = IORegistryEntryCreateCFProperty(
+                service,
+                "ChargerData" as CFString,
+                kCFAllocatorDefault,
+                0
+            )?.takeRetainedValue() as? [String: Any],
+            let notChargingReason = chargerData["NotChargingReason"] as? NSNumber
+        else { return false }
+
+        return notChargingReason.uint64Value & chargeLimitReason != 0
     }
 }
