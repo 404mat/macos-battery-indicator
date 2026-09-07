@@ -2,6 +2,7 @@ import Foundation
 
 public enum ChargingMode: String, Codable, Equatable, Sendable {
     case charging
+    case paused
     case pluggedIn
     case discharging
     case error
