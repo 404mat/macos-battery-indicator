@@ -14,6 +14,7 @@
 		100000000000000000000016 /* charging.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000016 /* charging.png */; };
 		100000000000000000000017 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000017 /* about.png */; };
 		10000000000000000000000A /* BatteryUI in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000001 /* BatteryUI */; };
+		100000000000000000000018 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000018 /* AppIcon.icon */; };
 		100000000000000000000012 /* BatteryCore in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000006 /* BatteryCore */; };
 		100000000000000000000013 /* BatteryData in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000007 /* BatteryData */; };
 /* End PBXBuildFile section */
@@ -27,6 +28,7 @@
 		200000000000000000000016 /* charging.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/charging.png; sourceTree = SOURCE_ROOT; };
 		200000000000000000000017 /* about.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/about.png; sourceTree = SOURCE_ROOT; };
 		200000000000000000000008 /* App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/App-Info.plist; sourceTree = SOURCE_ROOT; };
+		200000000000000000000018 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.icon; path = Resources/AppIcon.icon; sourceTree = SOURCE_ROOT; };
 		20000000000000000000000C /* BatteryIndicator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BatteryIndicator.app; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -51,6 +53,7 @@
 				100000000000000000000015 /* menu-bar.png in Resources */,
 				100000000000000000000016 /* charging.png in Resources */,
 				100000000000000000000017 /* about.png in Resources */,
+				100000000000000000000018 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -84,6 +87,7 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000008 /* App-Info.plist */,
+				200000000000000000000018 /* AppIcon.icon */,
 			);
 			name = Configuration;
 			sourceTree = "<group>";
@@ -165,8 +169,8 @@
 /* Begin XCBuildConfiguration section */
 		B00000000000000000000001 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ARCHS = arm64; CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 27.0; SDKROOT = macosx; SWIFT_VERSION = 5.0; }; name = Debug; };
 		B00000000000000000000002 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ARCHS = arm64; CLANG_ENABLE_MODULES = YES; MACOSX_DEPLOYMENT_TARGET = 27.0; SDKROOT = macosx; SWIFT_COMPILATION_MODE = wholemodule; SWIFT_OPTIMIZATION_LEVEL = "-O"; SWIFT_VERSION = 5.0; }; name = Release; };
-		B00000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/App-Info.plist; MACOSX_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Debug; };
-		B00000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/App-Info.plist; MACOSX_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Release; };
+		B00000000000000000000003 /* Debug */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/App-Info.plist; MACOSX_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Debug; };
+		B00000000000000000000004 /* Release */ = {isa = XCBuildConfiguration; buildSettings = {ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon; CODE_SIGN_IDENTITY = "-"; CODE_SIGN_STYLE = Manual; ENABLE_HARDENED_RUNTIME = YES; INFOPLIST_FILE = Configuration/App-Info.plist; MACOSX_DEPLOYMENT_TARGET = 27.0; PRODUCT_BUNDLE_IDENTIFIER = com.mathias.BatteryIndicator; PRODUCT_NAME = "$(TARGET_NAME)"; SWIFT_VERSION = 5.0; }; name = Release; };
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
