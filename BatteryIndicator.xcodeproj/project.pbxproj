@@ -13,6 +13,8 @@
 		100000000000000000000015 /* menu-bar.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000015 /* menu-bar.png */; };
 		100000000000000000000016 /* charging.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000016 /* charging.png */; };
 		100000000000000000000017 /* about.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000017 /* about.png */; };
+		100000000000000000000019 /* general.png in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000019 /* general.png */; };
+		100000000000000000000020 /* LaunchAtLogin.swift in Sources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000020 /* LaunchAtLogin.swift */; };
 		10000000000000000000000A /* BatteryUI in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000001 /* BatteryUI */; };
 		100000000000000000000018 /* AppIcon.icon in Resources */ = {isa = PBXBuildFile; fileRef = 200000000000000000000018 /* AppIcon.icon */; };
 		100000000000000000000012 /* BatteryCore in Frameworks */ = {isa = PBXBuildFile; productRef = 900000000000000000000006 /* BatteryCore */; };
@@ -27,6 +29,8 @@
 		200000000000000000000015 /* menu-bar.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/menu-bar.png; sourceTree = SOURCE_ROOT; };
 		200000000000000000000016 /* charging.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/charging.png; sourceTree = SOURCE_ROOT; };
 		200000000000000000000017 /* about.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/about.png; sourceTree = SOURCE_ROOT; };
+		200000000000000000000019 /* general.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Sources/App/Resources/SidebarIcons/general.png; sourceTree = SOURCE_ROOT; };
+		200000000000000000000020 /* LaunchAtLogin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Sources/App/LaunchAtLogin.swift; sourceTree = SOURCE_ROOT; };
 		200000000000000000000008 /* App-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Configuration/App-Info.plist; sourceTree = SOURCE_ROOT; };
 		200000000000000000000018 /* AppIcon.icon */ = {isa = PBXFileReference; lastKnownFileType = folder.icon; path = Resources/AppIcon.icon; sourceTree = SOURCE_ROOT; };
 		20000000000000000000000C /* BatteryIndicator.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = BatteryIndicator.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -53,6 +57,7 @@
 				100000000000000000000015 /* menu-bar.png in Resources */,
 				100000000000000000000016 /* charging.png in Resources */,
 				100000000000000000000017 /* about.png in Resources */,
+				100000000000000000000019 /* general.png in Resources */,
 				100000000000000000000018 /* AppIcon.icon in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -73,12 +78,14 @@
 			isa = PBXGroup;
 			children = (
 				200000000000000000000001 /* main.swift */,
+				200000000000000000000020 /* LaunchAtLogin.swift */,
 				200000000000000000000010 /* SettingsView.swift */,
 				200000000000000000000011 /* BatteryAppModel.swift */,
 				200000000000000000000014 /* BatteryStatusImage.swift */,
 				200000000000000000000015 /* menu-bar.png */,
 				200000000000000000000016 /* charging.png */,
 				200000000000000000000017 /* about.png */,
+				200000000000000000000019 /* general.png */,
 			);
 			name = App;
 			sourceTree = "<group>";
@@ -158,6 +165,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				100000000000000000000001 /* main.swift in Sources */,
+				100000000000000000000020 /* LaunchAtLogin.swift in Sources */,
 				100000000000000000000010 /* SettingsView.swift in Sources */,
 				100000000000000000000011 /* BatteryAppModel.swift in Sources */,
 				100000000000000000000014 /* BatteryStatusImage.swift in Sources */,

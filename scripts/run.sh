@@ -5,16 +5,21 @@ set -euo pipefail
 script_directory="${0:A:h}"
 project_directory="${script_directory:h}"
 open_app=true
+configuration=Debug
+install_to_applications=false
 
-if [[ "${1:-}" == "--build-only" ]]; then
-    open_app=false
-    shift
-fi
+team_id=""
+for arg in "$@"; do
+    case "$arg" in
+        --build-only) open_app=false ;;
+        --release) configuration=Release ;;
+        --install) install_to_applications=true ;;
+        *) team_id="${team_id:-$arg}" ;;
+    esac
+done
 
 derived_data_path="${DERIVED_DATA_PATH:-${project_directory}/.build/XcodeDerivedData}"
-app_path="${derived_data_path}/Build/Products/Debug/BatteryIndicator.app"
-
-team_id="${1:-${DEVELOPMENT_TEAM:-}}"
+app_path="${derived_data_path}/Build/Products/${configuration}/BatteryIndicator.app"
 identity_name=""
 
 if [[ -z "${team_id}" ]]; then
@@ -58,7 +63,14 @@ cd "${project_directory}"
     DEVELOPMENT_TEAM="${team_id}" \
     build
 
-if ${open_app}; then
+if ${open_app} && ${install_to_applications}; then
+    install_path="/Applications/BatteryIndicator.app"
+    /usr/bin/killall BatteryIndicator 2>/dev/null || true
+    /bin/rm -rf "${install_path}"
+    /usr/bin/ditto "${app_path}" "${install_path}"
+    print "Installed ${install_path}"
+    /usr/bin/open "${install_path}"
+elif ${open_app}; then
     /usr/bin/open "${app_path}"
 else
     print "Built ${app_path}"

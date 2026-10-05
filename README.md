@@ -8,9 +8,19 @@ A macOS 27 menu-bar battery app.
 make run
 ```
 
+## Install to /Applications
+
+```sh
+make release
+```
+
+This builds the Release configuration with your signing identity, replaces `/Applications/BatteryIndicator.app`, and relaunches it.
+
 This finds an Apple Development identity in your keychain, extracts its team ID, then builds and opens `BatteryIndicator.app`. If more than one development team is available, select one explicitly with `./scripts/run.sh TEAM_ID`.
 
-Charging limits are managed by macOS 27. Open **Settings → Charge Control** in the app to jump directly to the native Charging settings and choose a limit from 80% to 100%.
+Charging limits are managed by macOS 27. Open **Settings → Charging** in the app to jump directly to the native Charging settings and choose a limit from 80% to 100%.
+
+To keep the monitor running across restarts, enable **Settings → General → Start on login**.
 
 You can also open `BatteryIndicator.xcodeproj` and run the shared `BatteryIndicator` scheme.
 

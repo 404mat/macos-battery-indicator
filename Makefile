@@ -1,4 +1,4 @@
-.PHONY: build run
+.PHONY: build run release
 
 DERIVED_DATA_PATH ?= .build/XcodeDerivedData
 
@@ -7,3 +7,6 @@ build:
 
 run:
 	DERIVED_DATA_PATH="$(DERIVED_DATA_PATH)" ./scripts/run.sh
+
+release:
+	DERIVED_DATA_PATH="$(DERIVED_DATA_PATH)" ./scripts/run.sh --release --install

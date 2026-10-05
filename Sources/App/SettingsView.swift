@@ -12,7 +12,7 @@ struct SettingsView: View {
     let onChartVisibilityChange: (Bool) -> Void
     let onEstimatedRemainingVisibilityChange: (Bool) -> Void
 
-    @State private var selection: SettingsPage? = .menuBar
+    @State private var selection: SettingsPage? = .general
 
     private var appName: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
@@ -39,7 +39,9 @@ struct SettingsView: View {
             .navigationSplitViewColumnWidth(min: 200, ideal: 220, max: 260)
         } detail: {
             Group {
-                switch selection ?? .menuBar {
+                switch selection ?? .general {
+                case .general:
+                    GeneralSettingsView()
                 case .menuBar:
                     MenuSettingsView(
                         onChartVisibilityChange: onChartVisibilityChange,
@@ -59,6 +61,7 @@ struct SettingsView: View {
 }
 
 private enum SettingsPage: String, CaseIterable, Identifiable {
+    case general
     case menuBar
     case charging
     case about
@@ -67,6 +70,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
 
     var title: String {
         switch self {
+        case .general: "General"
         case .menuBar: "Menu Bar"
         case .charging: "Charging"
         case .about: "About"
@@ -75,6 +79,7 @@ private enum SettingsPage: String, CaseIterable, Identifiable {
 
     var iconName: String {
         switch self {
+        case .general: "general"
         case .menuBar: "menu-bar"
         case .charging: "charging"
         case .about: "about"
@@ -127,6 +132,87 @@ private struct AppIdentityView: View {
         }
         .accessibilityElement(children: .combine)
     }
+}
+
+private struct GeneralSettingsView: View {
+    @State private var launchAtLoginEnabled = LaunchAtLogin.isEnabled
+    @State private var launchAtLoginNotice: LaunchAtLoginNotice?
+
+    private var appName: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+            ?? "Battery Indicator"
+    }
+
+    var body: some View {
+        SettingsPageContainer(
+            title: "General",
+            subtitle: "Control how the app starts up and runs."
+        ) {
+            SettingsGroup(title: "Startup") {
+                SettingsSwitchRow(
+                    title: "Start on login",
+                    isOn: Binding {
+                        launchAtLoginEnabled
+                    } set: { launchAtLoginEnabled = setLaunchAtLogin(desired: $0) }
+                )
+
+                if let launchAtLoginNotice {
+                    Divider()
+
+                    HStack(alignment: .firstTextBaseline) {
+                        Text(launchAtLoginNotice.message)
+                            .font(.callout)
+                            .foregroundStyle(launchAtLoginNotice.isError ? Color.red : Color.secondary)
+
+                        Spacer()
+
+                        if launchAtLoginNotice.showsOpenSettingsButton {
+                            Button("Open Login Items") {
+                                LaunchAtLogin.openLoginItemsSettings()
+                            }
+                        }
+                    }
+                    .padding(12)
+                }
+            }
+        }
+        .onAppear(perform: syncLaunchAtLoginState)
+        .onReceive(NotificationCenter.default.publisher(for: NSWindow.didBecomeKeyNotification)) { _ in
+            syncLaunchAtLoginState()
+        }
+    }
+
+    /// Applies the requested state and returns the state the system actually
+    /// ended up in, so the toggle never drifts from the real registration.
+    private func setLaunchAtLogin(desired: Bool) -> Bool {
+        switch LaunchAtLogin.setEnabled(desired) {
+        case .enabled:
+            launchAtLoginNotice = nil
+        case .requiresApproval:
+            launchAtLoginNotice = LaunchAtLoginNotice(
+                message: "Allow \(appName) in Login Items to finish setup.",
+                showsOpenSettingsButton: true
+            )
+        case .notRegistered:
+            launchAtLoginNotice = nil
+        case .failed(let message):
+            launchAtLoginNotice = LaunchAtLoginNotice(message: message, isError: true)
+        }
+        return LaunchAtLogin.isEnabled
+    }
+
+    private func syncLaunchAtLoginState() {
+        launchAtLoginEnabled = LaunchAtLogin.isEnabled
+        if launchAtLoginEnabled || LaunchAtLogin.currentStatus != .requiresApproval {
+            launchAtLoginNotice = nil
+        }
+    }
+}
+
+private struct LaunchAtLoginNotice {
+    let message: String
+    var isError = false
+    var showsOpenSettingsButton = false
 }
 
 private struct NativeChargeLimitSettingsView: View {
